@@ -11,30 +11,31 @@ import requests               # HTTP 請求庫
 from bs4 import BeautifulSoup # HTML 和 XML 解析庫
 
 class StockUtils:
-    """
-    取得「指定股票」的各項「技術指標」.
-
-    Attributes:
-        sHr1 (str): 分隔線 in printed output.
-        sHr2 (str): 分隔線 in printed output.
-
-    Created on: 2023-06-23
-    Last modified: 2024-06-23
-    """
-
     # 排版相關變數
     sHr1 = "==================================================";
     sHr2 = "--------------------------------------------------";
 
-    # def __init__(self):
-    #     """
-    #     建構式: 建立初始化資料
-    #     """
-    #     print('\t ===== class StockAnalyze() ===== ')
-    #     # get 當天日期
-    #     today = datetime.today().strftime('%Y-%m-%d')
-    #     # get 星期 (0 = Monday, 6 = Sunday)
-    #     weekday = datetime.strptime(today, '%Y-%m-%d').weekday() +1
+
+    def __init__(self):
+        """
+        取得「指定股票」的各項「技術指標」.
+
+        Attributes:
+            sHr1 (str): 分隔線 in printed output.
+            sHr2 (str): 分隔線 in printed output.
+            dToday (datetime.datetime): 當天日期
+            sToday (str): 當天日期
+
+        Created on: 2023-06-23
+        Last modified: 2024-06-23
+        """
+        print('\t ===== class StockAnalyze() ===== ')
+        # get 當天日期
+        self.dToday = datetime.today()            #<class 'datetime.datetime'>
+        self.sToday = self.dToday.strftime('%Y-%m-%d') #<class 'str'>
+        print(F"\t dToday = ({type(self.dToday)}) {self.dToday}")
+        print(F"\t sToday = ({type(self.sToday)}) {self.sToday}")
+
 
 
     def adjustDate(self,date):
@@ -53,6 +54,75 @@ class StockUtils:
             # 如果傳入的「傳入日期」是「星期日」，調整為「星期五」
             date -= timedelta(days=2)
         return date
+
+
+    def getStartDate(self,dEndDate,dStartDate=""):
+        """
+        取得「開始日期」及「抓取資料的開始日期」.
+
+        Args:
+            dEndDate (datetime): 結束日期
+            sStartDate (str): 開始日期，如傳入空值，會設為「結束日期」的前 30 個交易日.
+        Returns:
+            list
+                index[0] : 開始日期.
+                index[1] : 抓取資料的開始日期，會設為「開始日期」的前 60 個交易日.
+        """
+        # print('\t ===== getStartDate() ===== ')
+        # print(F"\t dEndDate = {type(dEndDate)} {dEndDate}")
+        # print(F"\t dStartDate = {type(dStartDate)} {dStartDate}")
+
+
+        # ------------------------------
+        # get 開始日期: 如果沒有傳入「開始日期」，預設為 「結束日期」的前 30 個交易日
+        # ------------------------------
+        if dStartDate == "":
+            # print(F"\t get dStartDate {self.sHr1}")
+
+            # 使用 yfinance 獲取台灣加權指數（^TWII）的歷史數據
+            dYahooStart = dEndDate - timedelta(days=90)
+            twii = yf.download('^TWII', start=dYahooStart, end=dEndDate)
+            # print(F"\t twii = ({type(twii)}) {len(twii)}")
+
+            # 依日期排序
+            twii = twii.sort_index(ascending=False)
+
+            i = 0
+            for index, row in twii.iterrows():
+                # print(F"\t\t {i} index = ({type(index)}) {index}")
+                i += 1
+                if i >= 30:
+                    dStartDate = index.to_pydatetime()
+                    break
+        # print(F"\t dStartDate = ({type(dStartDate)}) {dStartDate}")
+
+        # ------------------------------
+        # get 抓取資料的開始日期: 「開始日期」的前 60 個交易日
+        # ------------------------------
+        if dStartDate != "":
+            # print(F"\t get dExtendedStartDate {self.sHr1}")
+
+            # 使用 yfinance 獲取台灣加權指數（^TWII）的歷史數據
+            dYahooStart = dStartDate - timedelta(days=120)
+            twii = yf.download('^TWII', start=dYahooStart, end=dStartDate)
+            # print(F"\t twii = ({type(twii)}) {len(twii)}")
+            # print(F"\t twii = ({type(twii)}) {len(twii)}")
+
+            # 依日期排序
+            twii = twii.sort_index(ascending=False)
+
+            i = 0
+            for index, row in twii.iterrows():
+                # print(F"\t\t {i} index = ({type(index)}) {index}")
+                i += 1
+                if i >= 60:
+                    dExtendedStartDate = index.to_pydatetime()
+                    break
+        # print(F"\t dExtendedStartDate = ({type(dExtendedStartDate)}) {dExtendedStartDate}")
+
+        return [dStartDate, dExtendedStartDate]
+
+
 
 
     def getStockAnalyze(self,stockCode,sEndDate="",sStartDate=""):
@@ -83,53 +153,35 @@ class StockUtils:
 
 
         # ------------------------------
-        # get 交易日期
-        # ------------------------------
-        # get 今天
-        dToday = datetime.today()
-        # get 今天前60天的日期
-        dTodayBefore = dToday - timedelta(days=60)
-        # print(F"\t \t dToday       = ({type(dToday)}) {dToday}")
-        # print(F"\t dTodayBefore = ({type(dTodayBefore)}) {dTodayBefore}")
-
-        # 使用 yfinance 獲取台灣加權指數（^TWII）的歷史數據
-        # 固定取「今天-60 到 今天」的資料
-        twii = yf.download('^TWII', start=dTodayBefore, end=dToday)
-        # print(F"\t twii = ({type(twii)}) {twii}")
-
-        # get「交易日期」清單 並 從中取到 最大交易日、最小交易日
-        dTradingDates = twii.index
-        dMaxDate = max(dTradingDates)
-        dMinDate = min(dTradingDates)
-        # print(F"\t dTradingDates = ({type(dTradingDates)}) {dTradingDates}")
-        # print(F"\t dMaxDate = ({type(dMaxDate)}) {dMaxDate}")
-        # print(F"\t dMinDate = ({type(dMinDate)}) {dMinDate}")
-
-
-        # ------------------------------
         # set 結束日期
         # ------------------------------
-        # 如果沒有傳入「結束日期」，預設為 今日
-        if sEndDate == "":
-            dEndDate = dMaxDate
-        else:
-            # string 轉成 datetime.datetime
+        if sEndDate != "":
+            # string 轉成 datetime.datetime 並 調整日期不得為六、日
             dEndDate = datetime.strptime(sEndDate, '%Y-%m-%d')
             dEndDate = self.adjustDate(dEndDate)
+        else:
+            # 如果沒有傳入「結束日期」，預設為 今日
+            dEndDate = self.dToday
+        print(F"\t dEndDate = ({type(dEndDate)}) {dEndDate}")
 
 
         # ------------------------------
         # set 開始日期
         # ------------------------------
         # 如果沒有傳入「開始日期」，「抓取資料的開始日期」預設為 今日-60
-        if sStartDate == "":
-            dStartDate = dMinDate
-        else:
-            # string 轉成 datetime.datetime
+        if sStartDate != "":
+            # string 轉成 datetime.datetime 並 調整日期不得為六、日
             dStartDate = datetime.strptime(sStartDate, '%Y-%m-%d')
-        dExtendedStartDate = dStartDate - timedelta(days=60)
-        dExtendedStartDate = self.adjustDate(dExtendedStartDate)
-        print(F"\t dEndDate   = ({type(dEndDate)}) {dEndDate}")
+            dStartDate = self.adjustDate(dStartDate)
+        else:
+            dStartDate = ""
+
+        listDate = self.getStartDate(dEndDate,dStartDate)
+        print(F"\t listDate = ({type(listDate)}) {len(listDate)}")
+        dStartDate = listDate[0]
+        dExtendedStartDate = listDate[1]
+        # dExtendedStartDate = dStartDate - timedelta(days=60)
+        # dExtendedStartDate = self.adjustDate(dExtendedStartDate)
         print(F"\t dStartDate = ({type(dStartDate)}) {dStartDate}")
         print(F"\t dExtendedStartDate = ({type(dExtendedStartDate)}) {dExtendedStartDate}")
 
@@ -396,34 +448,41 @@ class StockUtils:
         # Set 要回傳的天數，預為 0
         iCountDays = 0
 
+        ilistStockInfo = len(listStockInfo)
+
         # 遍歷 stockinfo 從第二天開始到最後一天
         for i in range(len(listStockInfo)):
+            # print(F"\t i = {i} {self.sHr1}")
+
+            # 如果已經比到 list 的最後一筆，結束迴圈
+            if i == ilistStockInfo-1:
+                break
+
             # <class 'list'>
-            listCurrentDay  = listStockInfo[i]
-            listPreviousDay = listStockInfo[i+1]
+            listCurrent = listStockInfo[i]
+            listPreviou = listStockInfo[i+1]
 
             # !!方便測試時，提早跳出迴圈
             # if i == 3:
             #     break
-            # print(F"\t i = ({i} {self.sHr1}")
-            # print(F"\t listCurrentDay  = {i}.{listCurrentDay} ,listPreviousDay = {listPreviousDay}")
+            # print(F"\t listCurrent = {listCurrent} ,listPreviou = {listPreviou}")
 
             # get 這次迴圈日期 & 前一天的日期的「多頭數量」
-            sDate = listCurrentDay[0]
+            sDate = listCurrent[0]
             if sType == "down":
-                iCurrentQty  = listCurrentDay[5]
-                iPreviousQty = listPreviousDay[5]
+                iCurrentQty  = listCurrent[5]
+                iPreviousQty = listPreviou[5]
             else:
-                iCurrentQty  = listCurrentDay[4]
-                iPreviousQty = listPreviousDay[4]
+                iCurrentQty  = listCurrent[4]
+                iPreviousQty = listPreviou[4]
             # print(F"\t i = {i},sDate = {sDate},iCurrentQty = {iCurrentQty}, iPreviousQty = {iPreviousQty}")
 
             # 如果 這次迴圈日期的多頭數是 > 前一天的，連續天數加一
             if iCurrentQty > iPreviousQty:
                 iCountDays += 1
                 # print(F"\t iCountDays = {iCountDays}")
-            else:
-                break
+            # else:
+            #     break
 
         return iCountDays
 
@@ -562,7 +621,7 @@ class StockUtils:
         script_dir = os.path.dirname(__file__)
 
         # Set JSON 憑證文件的路徑
-        credentials_file = os.path.join(script_dir, "stock-426606-d2563f95c1b5.json")
+        credentials_file = os.path.join(script_dir, "stock-426606-5b695171527f.json")
 
         # 使用 JSON 憑證文件來授權
         gc = pygsheets.authorize(service_file=credentials_file)

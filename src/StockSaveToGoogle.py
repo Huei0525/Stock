@@ -10,6 +10,7 @@ import pandas as pd           # 數據分析和處理庫
 import requests               # HTTP 請求庫
 from bs4 import BeautifulSoup # HTML 和 XML 解析庫
 
+
 class StockSaveToGoogle:
     """
     取得「指定股票」的各項「技術指標」後，更新到 GoogleSheet.
@@ -20,6 +21,9 @@ class StockSaveToGoogle:
 
     Created on: 2023-06-23
     Last modified: 2024-06-23
+
+    !!一直發生憑証錯誤
+    An error occurred: ('invalid_grant: Invalid JWT Signature.', {'error': 'invalid_grant', 'error_description': 'Invalid JWT Signature.'})
     """
 
     # 排版相關變數
@@ -31,54 +35,211 @@ class StockSaveToGoogle:
         """
         建構式: 建立初始化資料
         """
-        print('\t ===== class StockSaveToGoogle() ===== ')
+        print('===== class StockSaveToGoogle() ===== ')
 
+        # 記錄 要「買」的股票
+        self.listBuy = []
+
+        # 記錄 要「賣」的股票
+        self.listSell = []
+
+
+        # new class
+        self.objStockUtils = StockUtils()
+
+        # ------------------------------
+        # get 今天
+        # ------------------------------
+        self.dToday = datetime.today() #<class 'datetime.datetime'>
+        # dToday_date_only = dToday.date()
+        self.sToday = self.dToday.strftime('%Y-%m-%d') #<class 'str'>
+        # get 星期 <class 'int'> (0 = Monday, 6 = Sunday)
+        self.iWeekday = self.dToday.weekday() +1
+        print(F"dToday = ({type(self.dToday)}) {self.dToday}")
+        print(F"sToday = ({type(self.sToday)}) {self.sToday}")
+        print(F"iWeekday = ({type(self.iWeekday)}) {self.iWeekday}")
+
+        # ------------------------------
+        # 使用憑證文件，開啟 GoogleSheet
+        # ------------------------------
         # get 目前程式檔案路徑
         script_dir = os.path.dirname(__file__)
 
         # Set JSON 憑證文件的路徑
-        credentials_file = os.path.join(script_dir, "stock-426606-d2563f95c1b5.json")
-        print(F"\t credentials_file = {type(credentials_file)} {credentials_file}")
+        credentials_file = os.path.join(script_dir, "stock-426606-5b695171527f.json")
+        print(F"credentials_file = {type(credentials_file)} {credentials_file}")
 
         # 使用 JSON 憑證文件來授權
         self.gc = pygsheets.authorize(service_file=credentials_file)
+
+        # 開啟 GoogleSheet 試算表(spreadsheet)
+        self.shtInputBuy  = self.gc.open_by_key('1a6Z1LSBV2u7P01X1vT0v5AyqqwcH-aj_dQ9pbfXV1X4') # (要買的) 聰全資料表-選股記錄-成交量排行-20000
+        self.shtInputSell = self.gc.open_by_key('1YjPSxs2gM0HNC095Y2JW7nbG83rPPWA4MAmvdNnmUMU') # (要賣的) 觀察股票List
+        self.shtOutput = self.gc.open_by_key('18kL5aIbNLudSUkgfu1pdGVYf-2citOQjjCST3lIInEA') # 選股記錄_2024
+        self.shtOutputDetails = self.gc.open_by_key('13ya5frtagmkCojhthWbG82L0NzTshX5PqwK25MNER3k') #技術指標明細
 
 
     def upCurrentStock(self):
         """
         取得「目前買的股票」的基本資料 及 各項技術指標，更新到 GoogleSheet
         """
-        print('\t ===== upCurrentStock() ===== ')
+        print('===== upCurrentStock() ===== ')
 
         try:
-            # ------------------------------
-            # 前置作業，使用憑證文件，開啟 GoogleSheet
-            # ------------------------------
-            # 開啟 GoogleSheet 試算表(spreadsheet)
-            # shtTest   = gc.open_by_key('1djPZNb2FfyLBLNWeuTwA9TNWLzdCaR5IRTOjy1Zn36w') # 測試試算表
-            shtInput  = self.gc.open_by_key('1YjPSxs2gM0HNC095Y2JW7nbG83rPPWA4MAmvdNnmUMU') # 觀察股票List
-            shtOutput = self.gc.open_by_key('1NvtyIQ0370gUCngRgaTUNxPs7kRTBpT1tSnsjl0IfMY') # 技術指標List
-
+            # 組出要寫到 GoogleSheet 的內容
+            listOutput = []
 
             # get GoogleSheet 中的第一個 工作表(worksheet)
-            wksInput  = shtInput[0]
-            wksOutput = shtOutput[0]
+            wksInput = self.shtInputSell[0]
 
             # 讀取「觀察股票List」，存到 DataFrame
             dfInput = pd.DataFrame(wksInput.get_all_records())
             # print(f"dfInput = {dfInput}")
 
-            # Create empty List，用於收進要寫入「技術指標List」的資料
-            listOutput = []
+            for row in dfInput.itertuples(index=True, name='Pandas'):
+                i = row.Index
+                stockCode = str(row[1])
+                stockName = row[2]
+                print(f"{self.sHr1}")
+                print(f"indexRow = {i}, 股票代號 = {stockCode}, 股票名稱 = {stockName}")
+
+                # !!方便測試時，提早跳出迴圈
+                # if i == 1:
+                #     break
+
+                # 防呆: 檢查 stockNo 是否為空值
+                if pd.isna(stockCode) or stockCode == "":
+                    continue  # 跳出此次迴圈，進入下一個迴圈
+
+                # 爬Yahoo，取得當天股票資訊
+                dictYahooData = self.objStockUtils.getStockData4Yahoo(stockCode)
+                print(f"dictYahooData = {dictYahooData}")
+
+
+                # 計算技術指標
+                listStockInfo = self.objStockUtils.getStockAnalyze(stockCode,"","")
+                print(F"listStockInfo size = {type(listStockInfo)} {len(listStockInfo)}")
+
+                for i in range(len(listStockInfo)):
+                    listCurrent = listStockInfo[i]
+
+                    # get 資料日期
+                    sDate = listCurrent[0]
+                    print(F"sDate = {type(sDate)} {len(sDate)}")
+
+                    # 只取當天的資料，故日期非當天即跳出迴圈
+                    if (sDate != self.sToday):
+                        break
+
+                    # stockCode     = listCurrent[1] # 股票代號
+                    stockName     = listCurrent[2] # 股票名稱
+                    fClosePrice   = listCurrent[3] # 收盤價
+                    iBullishCount = listCurrent[4] # 多頭數量
+                    iBearishCount = listCurrent[5] # 空頭數量
+                    dictSignals   = listCurrent[6] # 詳細各計術指標值、歷史價格數據
+                    # print(F"\t {sHr2}")
+                    # print(F"\t fClosePrice = ({type(fClosePrice)}) {fClosePrice}")
+                    # print(F"\t iBullishCount = ({type(iBullishCount)}) {iBullishCount}")
+                    # print(F"\t iBearishCount = ({type(iBearishCount)}) {iBearishCount}")
+                    # print(F"\t dictSignals = ({type(dictSignals)})")
+
+                    # 取得「多頭數量」連續增加天數
+                    iUpDays   = self.objStockUtils.countIncreaseDays("up",listStockInfo)
+                    # 取得「空頭數量」連續增加天數
+                    iDownDays = self.objStockUtils.countIncreaseDays("down",listStockInfo)
+                    # print(F"\t iUpDays   = ({type(iUpDays)}) {iUpDays}")
+                    print(F"\t iDownDays = ({type(iDownDays)}) {iDownDays}")
+
+
+                    # 取得「多頭數量」連續 >=index 的天數
+                    iUpDays20 = self.objStockUtils.countIndexDays('up', listStockInfo, 20)
+                    iUpDays15 = self.objStockUtils.countIndexDays('up', listStockInfo, 15)
+                    # print(F"\t iUpDays20 = ({type(iUpDays20)}) {iUpDays20}")
+                    # print(F"\t iUpDays15 = ({type(iUpDays15)}) {iUpDays15}")
+
+                    # 取得「空頭數量」連續 >=index 的天數
+                    iDownDays20 = self.objStockUtils.countIndexDays('down', listStockInfo, 20)
+                    iDownDays15 = self.objStockUtils.countIndexDays('down', listStockInfo, 15)
+                    # print(F"\t iDownDays20 = ({type(iDownDays20)}) {iDownDays20}")
+                    # print(F"\t iDownDays15 = ({type(iDownDays15)}) {iDownDays15}")
+
+                    # 將新行添加到 dfOutput
+                    listOutput.append({
+                        "更新日期": sDate,
+                        "星期": self.iWeekday,
+                        "股票代號": stockCode,
+                        "股票名稱": stockName,
+                        "賣出Flag": "",
+                        "最新股價": "",
+                        "最新報酬率" : "",
+                        "收盤價": fClosePrice,
+                        "漲跌": dictYahooData.get("漲跌", 0),
+                        "幅度(%)": dictYahooData.get("幅度", 0),
+                        "成交量": dictYahooData.get("成交量", 0),
+                        "連漲連跌": dictYahooData.get("連漲連跌", 0),
+                        "技術指標-多頭數量" : iBullishCount,
+                        "技術指標-空頭數量" : iBearishCount,
+                        "「多頭數量」連續增加天數" : iUpDays,
+                        "「多頭數量」連續>20天數"  : iUpDays20,
+                        "「多頭數量」連續>15天數"  : iUpDays15,
+                        "「空頭數量」連續增加天數" : iDownDays,
+                        "「空頭數量」連續>20天數"  : iDownDays20,
+                        "「空頭數量」連續>15天數"  : iDownDays15,
+                        "簡單移動平均線 (SMA)" : dictSignals.get("簡單移動平均線 (SMA)", 0),
+                        "指數移動平均線 (EMA)" : dictSignals.get("指數移動平均線 (EMA)", 0),
+                        "移動平均收斂背離指標 (MACD)" : dictSignals.get("移動平均收斂背離指標 (MACD)", 0),
+                        "相對強弱指數 (RSI)" : dictSignals.get("相對強弱指數 (RSI)", 0),
+                        "隨機指標 (STOCH)" : dictSignals.get("隨機指標 (STOCH)", 0),
+                        "布林帶 (BBANDS)" : dictSignals.get("布林帶 (BBANDS)", 0),
+                        "平衡交易量 (OBV)" : dictSignals.get("平衡交易量 (OBV)", 0),
+                        "威廉指標 (WILLR)" : dictSignals.get("威廉指標 (WILLR)", 0),
+                        "平均真實範圍 (ATR)" : dictSignals.get("平均真實範圍 (ATR)", 0),
+                        "商品通道指數 (CCI)" : dictSignals.get("商品通道指數 (CCI)", 0),
+                        "動量指標 (MOM)" : dictSignals.get("動量指標 (MOM)", 0),
+                        "龐氏指標 (SAR)" : dictSignals.get("龐氏指標 (SAR)", 0),
+                        "力量指標 (FORCE)" : dictSignals.get("力量指標 (FORCE)", 0),
+                        "標準差 (STDDEV)" : dictSignals.get("標準差 (STDDEV)", 0),
+                        "平均方向性指數 (ADX)" : dictSignals.get("平均方向性指數 (ADX)", 0),
+                        "方差移動平均線 (VARMA)" : dictSignals.get("方差移動平均線 (VARMA)", 0),
+                        "成交量移動平均線 (VMA 短期)" : dictSignals.get("成交量移動平均線 (VMA 短期)", 0),
+                        "成交量移動平均線 (VMA 中期)" : dictSignals.get("成交量移動平均線 (VMA 中期)", 0),
+                        "成交量移動平均線 (VMA 長期)" : dictSignals.get("成交量移動平均線 (VMA 長期)", 0),
+                        "成交量比率 (VROC)" : dictSignals.get("成交量比率 (VROC)", 0),
+                        "Chande Momentum Oscillator (CMO)" : dictSignals.get("Chande Momentum Oscillator (CMO)", 0),
+                        "Ease of Movement (EMV)" : dictSignals.get("Ease of Movement (EMV)", 0),
+                        "Kaufman Adaptive Moving Average (KAMA)" : dictSignals.get("Kaufman Adaptive Moving Average (KAMA)", 0),
+                        "Money Flow Index (MFI)" : dictSignals.get("Money Flow Index (MFI)", 0),
+                        "Price and Volume Trend (PVT)" : dictSignals.get("Price and Volume Trend (PVT)", 0),
+                    })
 
             # ------------------------------
-            # 讀取「觀察股票List」
+            # 將資料寫入 GoogleSheet 的內容
             # ------------------------------
-            # get 當天日期 <class 'str'>
-            sToday = datetime.today().strftime('%Y-%m-%d')
-            # get 星期 <class 'int'> (0 = Monday, 6 = Sunday)
-            iWeekday = datetime.strptime(sToday, '%Y-%m-%d').weekday() +1
-            print(F"sToday = {sToday} ,iWeekday = {iWeekday}")
+            # Set 表頭
+            columns = ["更新日期","星期","股票代號","股票名稱"
+                        ,"賣出Flag","最新股價","最新報酬率","收盤價","漲跌","幅度(%)","成交量","連漲連跌"
+                        ,"技術指標-多頭數量","技術指標-空頭數量"
+                        ,"「多頭數量」連續增加天數","「多頭數量」連續>20天數","「多頭數量」連續>15天數"
+                        ,"「空頭數量」連續增加天數","「空頭數量」連續>20天數","「空頭數量」連續>15天數"
+                        , "簡單移動平均線 (SMA)", "指數移動平均線 (EMA)", "移動平均收斂背離指標 (MACD)", "相對強弱指數 (RSI)", "隨機指標 (STOCH)", "布林帶 (BBANDS)", "平衡交易量 (OBV)", "威廉指標 (WILLR)", "平均真實範圍 (ATR)", "商品通道指數 (CCI)", "動量指標 (MOM)", "龐氏指標 (SAR)", "力量指標 (FORCE)", "標準差 (STDDEV)", "平均方向性指數 (ADX)", "方差移動平均線 (VARMA)", "成交量移動平均線 (VMA 短期)", "成交量移動平均線 (VMA 中期)", "成交量移動平均線 (VMA 長期)", "成交量比率 (VROC)", "Chande Momentum Oscillator (CMO)", "Ease of Movement (EMV)", "Kaufman Adaptive Moving Average (KAMA)", "Money Flow Index (MFI)", "Price and Volume Trend (PVT)"]
+            print(F"\t columns size {type(columns)} {len(columns)}")
+            print(F"\t listOutput size {type(listOutput)} {len(listOutput)}")
+
+            dfOutput = pd.DataFrame(listOutput, columns=columns)
+
+            # 將資料依「技術指標-多頭數量」排序
+            dfOutput = dfOutput.sort_values(by='技術指標-多頭數量', ascending=False)
+
+            # get 目前工作表資料，並轉為 DataFrame
+            wksOutput = self.shtOutput[1]
+            existingData = wksOutput.get_all_records()
+            dfExisting = pd.DataFrame(existingData)
+
+            # 將新的資料附加到現有資料後面
+            dfCombined = pd.concat([dfExisting, dfOutput], ignore_index=True)
+
+            # 將更新後的 DataFrame 寫回工作表
+            wksOutput.set_dataframe(dfCombined, (0, 0))
 
 
         except Exception as e:
@@ -86,248 +247,172 @@ class StockSaveToGoogle:
 
 
 
+    def processWorksheet(self, worksheet, sOutputDate):
+        '''
+        取得工作表，整理後加到「每日演算法選出要買的股票」清單中
+
+        Args:
+            worksheet (pygsheets.worksheet.Worksheet): GoogleSheet 工作表物件.
+        Returns:
+            沒有回傳任何東西
+        '''
+        # print('\t ===== processWorksheet() ===== ')
+        # print(F"\t worksheet = {type(worksheet)}")
+        # print(F"\t sOutputDate = {type(sOutputDate)} {sOutputDate}")
+
+        # get 工作表數據
+        rows = worksheet.get_all_values()
+        # print(F"\t rows = {type(rows)} {len(rows)}")
+        # 讀取「工作表(worksheet)」，存到 DataFrame
+        # dfInput1 = pd.DataFrame(worksheet.get_all_records())
+        
+        # get 表頭
+        headers = rows[0]
+        # print(F"\t headers = {type(headers)} {headers}")
+
+        # get 頁籤名稱
+        data_source = worksheet.title
+
+        i = 0
+        for row in rows[1:]:
+        # for row in dfInput1.itertuples(index=True, name='Pandas'):
+            i += 1
+            stockDate = row[0]
+            stockCode = row[1]
+            stockName = row[2]
+
+            # 只抓指定日期的資料
+            if sOutputDate != stockDate:
+                continue
+
+            # 建立字典，headers[i] 為 key，row[i] 為 value
+            # 從索引值 3 開始到 headers 列表的最後一個元素的索引（len(headers) - 1）才加入
+            additional_data = {
+                headers[i]: row[i] for i in range(3, len(headers))
+            }
+            # print(f"\t {self.sHr1}")
+            # print(f"\t indexRow = {i}, 資料日期 = {stockDate}, 股票代號 = {stockCode}, 股票名稱 = {stockName}")
+            # print(F"\t additional_data = {type(additional_data)} {additional_data}")
+            # print(F"\t data_source = {type(data_source)} {data_source}")
+
+            # 檢查「日期+股票代號」是否已有存在於列表中，
+            # 如果存在，更新資料; 否則，新增資料
+            found = False
+            for item in self.listBuy:
+                if item[0] == stockDate and item[1] == stockCode:
+                    item[4].add(data_source)
+                    found = True
+                    break
+
+            if not found:
+                self.listBuy.append([stockDate, stockCode, stockName, additional_data, {data_source}])
+
+
     def upBuyingStock(self):
         """
         取得「預計要買的股票」的基本資料 及 各項技術指標，更新到 GoogleSheet
         """
-        print('\t ===== upBuyingStock() ===== ')
+        print('===== upBuyingStock() ===== ')
 
         try:
-            # ------------------------------
-            # 前置作業，使用憑證文件，開啟 GoogleSheet
-            # ------------------------------
-            # 開啟 GoogleSheet 試算表(spreadsheet)
-            shtInput  = self.gc.open_by_key('1a6Z1LSBV2u7P01X1vT0v5AyqqwcH-aj_dQ9pbfXV1X4') # 聰全資料表-選股記錄-成交量排行-20000
-            shtOutput = self.gc.open_by_key('18kL5aIbNLudSUkgfu1pdGVYf-2citOQjjCST3lIInEA') # 選股記錄_2024
-            # shtOutputDetails = self.gc.open_by_key('13ya5frtagmkCojhthWbG82L0NzTshX5PqwK25MNER3k') #技術指標明細
-
-            # get GoogleSheet 中的第一個 工作表(worksheet)
-            # wksInput0  = shtInput[0]
-            wksInput1 = shtInput.worksheet_by_title('支持向量機-20000筆') #支持向量機
-            wksInput2 = shtInput.worksheet_by_title('梯度提升樹-20000筆') #梯度提升樹
-            wksOutput = shtOutput[0]
-            # wksOutputDetails = shtOutputDetails[0]
-
-            # 讀取「工作表(worksheet)」，存到 DataFrame
-            dfInput1 = pd.DataFrame(wksInput1.get_all_records())
-            dfInput2 = pd.DataFrame(wksInput2.get_all_records())
-            print(F"\t dfInput1 size = {type(dfInput1)} {len(dfInput1)}")
-            print(F"\t dfInput2 size = {type(dfInput2)} {len(dfInput2)}")
-
-
-            # new class
-            obj = StockUtils()
+            # 組出要寫到 GoogleSheet 的內容
+            listOutput = []
 
             # ------------------------------
-            # get 「當天」內演算法選到的股票資料
+            # 讀取工作表，整理後存到 self.listBuy
             # ------------------------------
-            # 原本想取一週內的全部重算，但是算到 71 筆的時候，就會被鎖，故還是改一日一日計算
-            # get 今天
-            # dToday = datetime.today()
-            dToday = obj.adjustDate(datetime.today())
-            sToday = dToday.strftime('%Y-%m-%d')
-            dToday_date_only = dToday.date()
+            # get GoogleSheet 中的工作表(worksheet)
+            # wksInput1 = self.shtInputBuy.worksheet_by_title('支持向量機-20000筆') #支持向量機
+            # wksInput2 = self.shtInputBuy.worksheet_by_title('梯度提升樹-20000筆') #梯度提升樹
+            wksInput3 = self.shtInputBuy.worksheet_by_title('MPL-20000筆') #MPL-20000筆
 
-            # get 今天前7天的日期
-            # dStartDate = dToday - timedelta(days=7)
-            dStartDate = dToday - timedelta(days=0)
-            print(F"\t dToday     = ({type(dToday)}) {dToday}")
-            print(F"\t dStartDate = ({type(dStartDate)}) {dStartDate}")
-
-
-            listStockCode = []
-            setExist = set()
-            # 宣告字典，記錄資料來源
-            dictSourceSht = {}
-
-            # # === 支持向量機 ===
-            for row in dfInput1.itertuples(index=True, name='Pandas'):
-                indexRow  = row.Index
-                sDate = row[1]
-                stockCode = row[2]
-                stockName = row[3]
-                # print(f"\t {self.sHr1}")
-                # print(f"\t indexRow = {indexRow}, 資料日期 = {sDate}, 股票代號 = {stockCode}, 股票名稱 = {stockName}")
-
-                # !!方便測試時，提早跳出迴圈
-                # if indexRow == 1:
-                if stockCode != 4916:
-                    continue
-
-                # 記錄資料來源
-                key = f"{sDate}+{stockCode}"
-                if key in dictSourceSht:
-                    dictSourceSht[key].append('支持向量機')
-                else:
-                    dictSourceSht[key] = ['支持向量機']
+            # 處理每個工作表的數據
+            sToday = "2024-06-24"
+            # self.processWorksheet(wksInput1,sToday)
+            # self.processWorksheet(wksInput2,sToday)
+            self.processWorksheet(wksInput3,sToday)
+            print(F"self.listBuy size = {type(self.listBuy)} {len(self.listBuy)}")
 
 
-                # 將 sDate 轉換為 datetime.date
-                dDate = datetime.strptime(sDate, '%Y-%m-%d')
-                dDate_date_only = dDate.date()
-
-                # 檢查「資料日期+股票代號」如果不存在於 List 中，才將資料加入
-                # if dStartDate <= dDate <= dToday and (sDate, stockCode) not in setExist:
-                if dDate_date_only == dToday_date_only and (sDate, stockCode) not in setExist:
-                    dict = {
-                        "5日集中度": row[4],
-                        "5日漲幅": row[5],
-                        "20日漲幅": row[6],
-                        "收盤價": row[7],
-                        "漲幅(%)": row[8],
-                        "外資連買(天)": row[9],
-                        "外資連買張數": row[10],
-                        "投信連買(天)": row[11],
-                        "投信連買張數": row[12],
-                        "自營商連買(天)": row[13],
-                        "大戶近1週增減": row[14],
-                        "散戶近1週增減％": row[15],
-                        "近20日資餘增減": row[16],
-                        "進出分點總家數差": row[17],
-                        "上市上櫃": row[18],
-                        "產業名稱": row[19],
-                        "支持向量機實際運算數值": row[20],
-                        "較5日均量縮放N%": row[21],
-                        "27個技術指標看多": row[22],
-                        "27個技術指標看空": row[23],
-                        "最新股價": row[24],
-                        "最新報酬率": row[25],
-                        "觀察可以買的": row[26],
-                    }
-                    # 記錄到 List，用於後續產出
-                    listStockCode.append([sDate, stockCode, stockName, dict])
-                    # 如果「資料日期+股票代號」已記錄到 List ，不再增加到 List
-                    setExist.add((sDate, stockCode))
-
-
-            print(F"\t 1.listStockCode size = {type(listStockCode)} {len(listStockCode)}")
-
-            # === 梯度提升樹 ===
-            for row in dfInput2.itertuples(index=True, name='Pandas'):
-                indexRow  = row.Index
-                sDate = row[1]
-                stockCode = row[2]
-                stockName = row[3]
-                # print(self.sHr1)
-                # print(f"indexRow = {indexRow}, 資料日期 = {sDate}, 股票代號 = {stockCode}, 股票名稱 = {stockName}")
-
-                # 記錄資料來源
-                key = f"{sDate}+{stockCode}"
-                if key in dictSourceSht:
-                    dictSourceSht[key].append('梯度提升樹')
-                else:
-                    dictSourceSht[key] = ['梯度提升樹']
-
-
-                # 將 sDate 轉換為 datetime.date
-                dDate = datetime.strptime(sDate, '%Y-%m-%d')
-                dDate_date_only = dDate.date()
-
-                # 檢查「資料日期+股票代號」如果不存在於 List 中，才將資料加入
-                # if dStartDate <= dDate <= dToday and (sDate, stockCode) not in setExist:
-                if dDate_date_only == dToday_date_only and (sDate, stockCode) not in setExist:
-                    dict = {
-                        "5日集中度": row[4],
-                        "5日漲幅": row[5],
-                        "20日漲幅": row[6],
-                        "收盤價": row[7],
-                        "漲幅(%)": row[8],
-                        "外資連買(天)": row[9],
-                        "外資連買張數": row[10],
-                        "投信連買(天)": row[11],
-                        "投信連買張數": row[12],
-                        "自營商連買(天)": row[13],
-                        "大戶近1週增減": row[14],
-                        "散戶近1週增減％": row[15],
-                        "近20日資餘增減": row[16],
-                        "進出分點總家數差": row[17],
-                        "上市上櫃": row[18],
-                        "產業名稱": row[19],
-                        "較5日均量縮放N%": row[20],
-                        "27個技術指標看多": row[21],
-                        "27個技術指標看空": row[22],
-                        "多頭指標連3天增加": row[23],
-                        "最新股價": row[24],
-                        "最新報酬率": row[25],
-                        "觀察可以買的": row[26],
-                    }
-                    # 記錄到 List，用於後續產出
-                    listStockCode.append([sDate, stockCode, stockName, dict])
-                    # 如果「資料日期+股票代號」已記錄到 List ，不再增加到 List
-                    setExist.add((sDate, stockCode))
-            print(F"\t 2.listStockCode size = {type(listStockCode)} {len(listStockCode)}")
+            # 印出 list 中的資料
+            # for item in self.listBuy:
+            #     print(f"\t {self.sHr1}")
+            #     print(f"\t 日期: {item[0]}, 股票代號: {item[1]}, 股票名稱: {item[2]}")
+            #     print(f"\t 詳細資料: {item[3]}")
+            #     print(f"\t 資料來源: {item[4]}")
 
 
             # ------------------------------
             # 組出要寫到 GoogleSheet 的內容
             # ------------------------------
-            listOutput = []
-            for i in range(len(listStockCode)):
-                listCurrent = listStockCode[i]
+            i = 0
+            for item in self.listBuy:
+                i += 1
+                stockDate = item[0] # 資料日期
+                stockCode = item[1] # 股票代號
+                stockName = item[2] # 股票名稱
+                dict      = item[3] # 詳細數據
+                dataSource= item[4] # 資料來源
+                print(f"{self.sHr1}")
+                print(f"indexRow = {i}, 資料日期 = {stockDate}, 股票代號 = {stockCode}, 股票名稱 = {stockName}")
 
                 # !!方便測試時，提早跳出迴圈
-                # if i == 1:
-                #     break
-
-                stockDate = listCurrent[0] # 資料日期
-                stockCode = listCurrent[1] # 股票代號
-                stockName = listCurrent[2] # 股票名稱
-                dict      = listCurrent[3] # 詳細數據
-                print(f"\t {self.sHr1}")
-                print(f"\t i = {i}, 資料日期 = {stockDate}, 股票代號 = {stockCode}, 股票名稱 = {stockName}")
-
-                # string 轉成 datetime.datetime
-                dStockDate = datetime.strptime(stockDate, '%Y-%m-%d')
-                # 「抓取資料的開始日期」預設為 今日-60
-                dStockDate = dStockDate - timedelta(days=60)
+                if i == 2:
+                    break
 
                 # 取得各技術指標
-                sEndDate = stockDate
-                sStartDate = dStockDate.strftime('%Y-%m-%d')
-                listStockInfo = obj.getStockAnalyze(str(stockCode),sEndDate,sStartDate)
-                print(F"\t listStockInfo size = {type(listStockInfo)} {len(listStockInfo)}")
+                listStockInfo = self.objStockUtils.getStockAnalyze(stockCode,"","")
+                print(F"listStockInfo size = {type(listStockInfo)} {len(listStockInfo)}")
 
                 for i in range(len(listStockInfo)):
-                    listCurrentDay = listStockInfo [i]
+                    listCurrent = listStockInfo[i]
 
-                    sDate = listCurrentDay[0]  # 資料日期
+                    # get 資料日期
+                    sDate = listCurrent[0]
+                    print(F"sDate = {type(sDate)} {len(sDate)}")
 
                     # 只取當天的資料，故日期非當天即跳出迴圈
-                    if (sDate != stockDate):
+                    if (sDate != self.sToday):
                         break
 
-                    stockCode     = listCurrentDay[1] # 股票代號
-                    stockName     = listCurrentDay[2] # 股票名稱
-                    fClosePrice   = listCurrentDay[3] # 收盤價
-                    iBullishCount = listCurrentDay[4] # 多頭數量
-                    iBearishCount = listCurrentDay[5] # 空頭數量
-                    # dictSignals   = listCurrentDay[6] # 詳細各計術指標值、歷史價格數據
+                    # stockCode     = listCurrent[1] # 股票代號
+                    stockName     = listCurrent[2] # 股票名稱
+                    fClosePrice   = listCurrent[3] # 收盤價
+                    iBullishCount = listCurrent[4] # 多頭數量
+                    iBearishCount = listCurrent[5] # 空頭數量
+                    dictSignals   = listCurrent[6] # 詳細各計術指標值、歷史價格數據
+                    # print(F"\t {sHr2}")
+                    # print(F"\t fClosePrice = ({type(fClosePrice)}) {fClosePrice}")
+                    # print(F"\t iBullishCount = ({type(iBullishCount)}) {iBullishCount}")
+                    # print(F"\t iBearishCount = ({type(iBearishCount)}) {iBearishCount}")
+                    # print(F"\t dictSignals = ({type(dictSignals)})")
 
                     # 取得「多頭數量」連續增加天數
-                    iUpDays   = obj.countIncreaseDays("up",listStockInfo)
+                    iUpDays   = self.objStockUtils.countIncreaseDays("up",listStockInfo)
                     # 取得「空頭數量」連續增加天數
-                    iDownDays = obj.countIncreaseDays("down",listStockInfo)
+                    iDownDays = self.objStockUtils.countIncreaseDays("down",listStockInfo)
                     # print(F"\t iUpDays   = ({type(iUpDays)}) {iUpDays}")
                     print(F"\t iDownDays = ({type(iDownDays)}) {iDownDays}")
 
 
                     # 取得「多頭數量」連續 >=index 的天數
-                    iUpDays20 = obj.countIndexDays('up', listStockInfo, 20)
-                    iUpDays15 = obj.countIndexDays('up', listStockInfo, 15)
+                    iUpDays20 = self.objStockUtils.countIndexDays('up', listStockInfo, 20)
+                    iUpDays15 = self.objStockUtils.countIndexDays('up', listStockInfo, 15)
                     # print(F"\t iUpDays20 = ({type(iUpDays20)}) {iUpDays20}")
                     # print(F"\t iUpDays15 = ({type(iUpDays15)}) {iUpDays15}")
 
                     # 取得「空頭數量」連續 >=index 的天數
-                    iDownDays20 = obj.countIndexDays('down', listStockInfo, 20)
-                    iDownDays15 = obj.countIndexDays('down', listStockInfo, 15)
+                    iDownDays20 = self.objStockUtils.countIndexDays('down', listStockInfo, 20)
+                    iDownDays15 = self.objStockUtils.countIndexDays('down', listStockInfo, 15)
                     # print(F"\t iDownDays20 = ({type(iDownDays20)}) {iDownDays20}")
                     # print(F"\t iDownDays15 = ({type(iDownDays15)}) {iDownDays15}")
 
+
                     # 將數據保存到 Excel 文件
-                    obj.saveToExcel(listStockInfo,"C:/Users/user/Desktop/股票技術指標輸出")
+                    self.objStockUtils.saveToExcel(listStockInfo,"C:/Users/user/Desktop/股票技術指標輸出")
 
                     # 將數據保存到 Google 文件
-                    obj.saveToGoogle(listStockInfo)
+                    self.objStockUtils.saveToGoogle(listStockInfo)
 
                     # ------------------------------
                     # get 買進Flag
@@ -336,30 +421,28 @@ class StockSaveToGoogle:
                     # 20日漲幅 < 10
                     # 外資連買(天) > 1 OR 投信連買(天) > 1
                     # 進出分點總家數差 < 0
-                    # 「多頭數量」連續增加天數 >= 3 OR 取得「多頭數量」連續大於20天數 > 3
+                    # 「多頭數量」連續增加天數 >= 2 OR 取得「多頭數量」連續大於20天數 > 3
                     growth05 = dict.get("5日漲幅", 0)
                     growth20 = dict.get("20日漲幅", 0)
                     foreign_investors_buying = dict.get("外資連買(天)", 0)
                     investment_trust_buying  = dict.get("投信連買(天)", 0)
                     households = dict.get("進出分點總家數差", 0)
-                    # print(F"\t growth05 = ({type(growth05)}) {growth05}")
-                    # print(F"\t growth20 = ({type(growth20)}) {growth20}")
-                    # print(F"\t foreign_investors_buying = ({type(foreign_investors_buying)}) {foreign_investors_buying}")
-                    # print(F"\t investment_trust_buying = ({type(investment_trust_buying)}) {investment_trust_buying}")
-                    # print(F"\t households = ({type(households)}) {households}")
-
+                    print(F"\t growth05 = ({type(growth05)}) {growth05}")
+                    print(F"\t growth20 = ({type(growth20)}) {growth20}")
+                    print(F"\t foreign_investors_buying = ({type(foreign_investors_buying)}) {foreign_investors_buying}")
+                    print(F"\t investment_trust_buying = ({type(investment_trust_buying)}) {investment_trust_buying}")
+                    print(F"\t households = ({type(households)}) {households}")
 
                     isBuy = False
-                    if growth05 < 5 and growth20 < 10:
-                        if (foreign_investors_buying > 1 or investment_trust_buying > 1):
-                            if households < 0:
-                                if iUpDays >= 3 or iUpDays20 > 3:
+                    if float(growth05) < 5 and float(growth20) < 10:
+                        if (float(foreign_investors_buying) > 1 or float(investment_trust_buying) > 1):
+                            if int(households) < 0:
+                                if iUpDays >= 2 or iUpDays20 > 3:
                                     isBuy = True
 
-
-                    key = f"{sDate}+{stockCode}"
                     listOutput.append({
                         "更新日期": sDate,
+                        "星期": self.iWeekday,
                         "股票代號": stockCode,
                         "股票名稱": stockName,
                         "買進Flag": isBuy,
@@ -385,15 +468,14 @@ class StockSaveToGoogle:
                         "大戶近1週增減"  : dict.get("大戶近1週增減", 0),
                         "散戶近1週增減％": dict.get("散戶近1週增減％", 0),
                         "進出分點總家數差": dict.get("進出分點總家數差", 0),
-                        "資料來源" : dictSourceSht.get(key, 0),
+                        "資料來源" : dataSource,
                     })
-
 
             # ------------------------------
             # 將資料寫入 GoogleSheet 的內容
             # ------------------------------
             # Set 表頭
-            columns = ["更新日期","股票代號","股票名稱"
+            columns = ["更新日期","星期","股票代號","股票名稱"
                         ,"買進Flag","最新股價","最新報酬率","收盤價","漲幅(%)"
                         ,"技術指標-多頭數量","技術指標-空頭數量"
                         ,"「多頭數量」連續增加天數","「多頭數量」連續>20天數","「多頭數量」連續>15天數"
@@ -410,6 +492,7 @@ class StockSaveToGoogle:
             dfOutput = dfOutput.sort_values(by='技術指標-多頭數量', ascending=False)
 
             # get 目前工作表資料，並轉為 DataFrame
+            wksOutput = self.shtOutput[0]
             existingData = wksOutput.get_all_records()
             dfExisting = pd.DataFrame(existingData)
 
@@ -417,23 +500,35 @@ class StockSaveToGoogle:
             dfCombined = pd.concat([dfExisting, dfOutput], ignore_index=True)
 
             # 將更新後的 DataFrame 寫回工作表
-            wksOutput.set_dataframe(dfCombined, (0, 0))
+            # wksOutput.set_dataframe(dfCombined, (0, 0))
 
             # 設置公式
-            # formulas = [
-            #     ('E1', '=GOOGLEFINANCE("TPE:"&B2, "price")'),  # 最新股價
-            #     ('F1', '=(E2-G2)/G2*100')  # 最新報酬率
-            # ]
+            formulas = [
+                ('F', '=GOOGLEFINANCE("TPE:"&$C{row}, "price")'),  # 最新股價
+                ('G', '=($F{row}-$H{row})/$H{row}')  # 最新報酬率
+            ]
 
-            # for cell, formula in formulas:
-            #     wksOutput.update_value(cell, formula)
-
+            # # for cell, formula in formulas:
+            # #     wksOutput.update_value(cell, formula)
+            # 遍歷所有行，並將公式寫入
+            start_row = 2
+            end_row = 999
+            for row in range(start_row, end_row + 1):
+                for col, formula in formulas:
+                    cell = f'{col}{row}'
+                    formatted_formula = formula.format(row=row)
+                    wksOutput.update_acell(cell, formatted_formula)
 
         except Exception as e:
             print(f"An error occurred: {e}")
 
+
+
+
 # ==================================================
 # new class
 obj = StockSaveToGoogle()
+
+# obj.upCurrentStock()
 
 obj.upBuyingStock()
