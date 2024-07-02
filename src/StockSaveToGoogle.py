@@ -91,7 +91,7 @@ class StockSaveToGoogle:
 
             # 處理每個工作表的數據
             sGetDay = self.sToday
-            sGetDay = "2024-06-28"
+            # sGetDay = "2024-06-28"
 
             # get GoogleSheet 中的第一個 工作表(worksheet)
             wksInput = self.shtInputSell[0]
@@ -203,6 +203,7 @@ class StockSaveToGoogle:
                         "「空頭數量」連續>15天數"  : iDownDays15,
                         "簡單移動平均線 (SMA)" : dictSignals.get("簡單移動平均線 (SMA)", 0),
                         "指數移動平均線 (EMA)" : dictSignals.get("指數移動平均線 (EMA)", 0),
+                        "移動平均收斂背離指標 (MACD)" : dictSignals.get("移動平均收斂背離指標 (MACD)", 0),
                         "相對強弱指數 (RSI)" : dictSignals.get("相對強弱指數 (RSI)", 0),
                         "隨機指標 (STOCH)" : dictSignals.get("隨機指標 (STOCH)", 0),
                         "布林帶 (BBANDS)" : dictSignals.get("布林帶 (BBANDS)", 0),
@@ -214,7 +215,8 @@ class StockSaveToGoogle:
                         "龐氏指標 (SAR)" : dictSignals.get("龐氏指標 (SAR)", 0),
                         "力量指標 (FORCE)" : dictSignals.get("力量指標 (FORCE)", 0),
                         "標準差 (STDDEV)" : dictSignals.get("標準差 (STDDEV)", 0),
-                        "可變移動平均線 (VARMA)" : dictSignals.get("方差移動平均線 (VARMA)", 0),
+                        "平均方向性指數 (ADX)" : dictSignals.get("平均方向性指數 (ADX)", 0),
+                        "可變移動平均線 (VARMA)" : dictSignals.get("可變移動平均線 (VARMA)", 0),
                         "成交量移動平均線 (VMA 短期)" : dictSignals.get("成交量移動平均線 (VMA 短期)", 0),
                         "成交量移動平均線 (VMA 中期)" : dictSignals.get("成交量移動平均線 (VMA 中期)", 0),
                         "成交量移動平均線 (VMA 長期)" : dictSignals.get("成交量移動平均線 (VMA 長期)", 0),
@@ -236,7 +238,7 @@ class StockSaveToGoogle:
                         ,"技術指標-多頭數量","技術指標-空頭數量"
                         ,"「多頭數量」連續增加天數","「多頭數量」連續>20天數","「多頭數量」連續>15天數"
                         ,"「空頭數量」連續增加天數","「空頭數量」連續>20天數","「空頭數量」連續>15天數"
-                        , "簡單移動平均線 (SMA)", "指數移動平均線 (EMA)", "移動平均收斂背離指標 (MACD)", "相對強弱指數 (RSI)", "隨機指標 (STOCH)", "布林帶 (BBANDS)", "平衡交易量 (OBV)", "威廉指標 (WILLR)", "平均真實範圍 (ATR)", "商品通道指數 (CCI)", "動量指標 (MOM)", "龐氏指標 (SAR)", "力量指標 (FORCE)", "標準差 (STDDEV)", "平均方向性指數 (ADX)", "方差移動平均線 (VARMA)", "成交量移動平均線 (VMA 短期)", "成交量移動平均線 (VMA 中期)", "成交量移動平均線 (VMA 長期)", "成交量比率 (VROC)", "Chande Momentum Oscillator (CMO)", "Ease of Movement (EMV)", "Kaufman Adaptive Moving Average (KAMA)", "Money Flow Index (MFI)", "Price and Volume Trend (PVT)"]
+                        , "簡單移動平均線 (SMA)", "指數移動平均線 (EMA)", "移動平均收斂背離指標 (MACD)", "相對強弱指數 (RSI)", "隨機指標 (STOCH)", "布林帶 (BBANDS)", "平衡交易量 (OBV)", "威廉指標 (WILLR)", "平均真實範圍 (ATR)", "商品通道指數 (CCI)", "動量指標 (MOM)", "龐氏指標 (SAR)", "力量指標 (FORCE)", "標準差 (STDDEV)", "平均方向性指數 (ADX)", "可變移動平均線 (VARMA)", "成交量移動平均線 (VMA 短期)", "成交量移動平均線 (VMA 中期)", "成交量移動平均線 (VMA 長期)", "成交量比率 (VROC)", "Chande Momentum Oscillator (CMO)", "Ease of Movement (EMV)", "Kaufman Adaptive Moving Average (KAMA)", "Money Flow Index (MFI)", "Price and Volume Trend (PVT)"]
             print(F"\t columns size {type(columns)} {len(columns)}")
             print(F"\t listOutput size {type(listOutput)} {len(listOutput)}")
 
@@ -361,7 +363,7 @@ class StockSaveToGoogle:
 
             # 處理每個工作表的數據
             sGetDay = self.sToday
-            sGetDay = "2024-06-28"
+            # sGetDay = "2024-06-28"
             self.processWorksheet(wksInput1,sGetDay)
             self.processWorksheet(wksInput2,sGetDay)
             self.processWorksheet(wksInput3,sGetDay)
@@ -505,6 +507,31 @@ class StockSaveToGoogle:
                         "進出分點總家數差": dict.get("進出分點總家數差", 0),
                         "產業名稱": dict.get("產業名稱", 0),
                         "資料來源" : dataSource,
+                        "簡單移動平均線 (SMA)" : dictSignals.get("簡單移動平均線 (SMA)", 0),
+                        "指數移動平均線 (EMA)" : dictSignals.get("指數移動平均線 (EMA)", 0),
+                        "移動平均收斂背離指標 (MACD)" : dictSignals.get("移動平均收斂背離指標 (MACD)", 0),
+                        "相對強弱指數 (RSI)" : dictSignals.get("相對強弱指數 (RSI)", 0),
+                        "隨機指標 (STOCH)" : dictSignals.get("隨機指標 (STOCH)", 0),
+                        "布林帶 (BBANDS)" : dictSignals.get("布林帶 (BBANDS)", 0),
+                        "平衡交易量 (OBV)" : dictSignals.get("平衡交易量 (OBV)", 0),
+                        "威廉指標 (WILLR)" : dictSignals.get("威廉指標 (WILLR)", 0),
+                        "平均真實範圍 (ATR)" : dictSignals.get("平均真實範圍 (ATR)", 0),
+                        "商品通道指數 (CCI)" : dictSignals.get("商品通道指數 (CCI)", 0),
+                        "動量指標 (MOM)" : dictSignals.get("動量指標 (MOM)", 0),
+                        "龐氏指標 (SAR)" : dictSignals.get("龐氏指標 (SAR)", 0),
+                        "力量指標 (FORCE)" : dictSignals.get("力量指標 (FORCE)", 0),
+                        "標準差 (STDDEV)" : dictSignals.get("標準差 (STDDEV)", 0),
+                        "平均方向性指數 (ADX)" : dictSignals.get("平均方向性指數 (ADX)", 0),
+                        "可變移動平均線 (VARMA)" : dictSignals.get("可變移動平均線 (VARMA)", 0),
+                        "成交量移動平均線 (VMA 短期)" : dictSignals.get("成交量移動平均線 (VMA 短期)", 0),
+                        "成交量移動平均線 (VMA 中期)" : dictSignals.get("成交量移動平均線 (VMA 中期)", 0),
+                        "成交量移動平均線 (VMA 長期)" : dictSignals.get("成交量移動平均線 (VMA 長期)", 0),
+                        "成交量比率 (VROC)" : dictSignals.get("成交量比率 (VROC)", 0),
+                        "Chande Momentum Oscillator (CMO)" : dictSignals.get("Chande Momentum Oscillator (CMO)", 0),
+                        "Ease of Movement (EMV)" : dictSignals.get("Ease of Movement (EMV)", 0),
+                        "Kaufman Adaptive Moving Average (KAMA)" : dictSignals.get("Kaufman Adaptive Moving Average (KAMA)", 0),
+                        "Money Flow Index (MFI)" : dictSignals.get("Money Flow Index (MFI)", 0),
+                        "Price and Volume Trend (PVT)" : dictSignals.get("Price and Volume Trend (PVT)", 0),
                     })
 
             # ------------------------------
@@ -519,7 +546,8 @@ class StockSaveToGoogle:
                         ,"「空頭數量」連續增加天數","「空頭數量」連續>20天數","「空頭數量」連續>15天數"
                         ,"5日漲幅","20日漲幅"
                         ,"外資連買(天)","外資連買張數","投信連買(天)","投信連買張數","自營商連買(天)"
-                        ,"大戶近1週增減","散戶近1週增減％","進出分點總家數差","產業名稱","資料來源"]
+                        ,"大戶近1週增減","散戶近1週增減％","進出分點總家數差","產業名稱","資料來源"
+                        , "簡單移動平均線 (SMA)", "指數移動平均線 (EMA)", "移動平均收斂背離指標 (MACD)", "相對強弱指數 (RSI)", "隨機指標 (STOCH)", "布林帶 (BBANDS)", "平衡交易量 (OBV)", "威廉指標 (WILLR)", "平均真實範圍 (ATR)", "商品通道指數 (CCI)", "動量指標 (MOM)", "龐氏指標 (SAR)", "力量指標 (FORCE)", "標準差 (STDDEV)", "平均方向性指數 (ADX)", "可變移動平均線 (VARMA)", "成交量移動平均線 (VMA 短期)", "成交量移動平均線 (VMA 中期)", "成交量移動平均線 (VMA 長期)", "成交量比率 (VROC)", "Chande Momentum Oscillator (CMO)", "Ease of Movement (EMV)", "Kaufman Adaptive Moving Average (KAMA)", "Money Flow Index (MFI)", "Price and Volume Trend (PVT)"]
             print(F"columns size {type(columns)} {len(columns)}")
             print(F"listOutput size {type(listOutput)} {len(listOutput)}")
 

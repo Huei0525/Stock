@@ -261,13 +261,14 @@ class StockUtils:
         iShortTerm = 5 #短期移動平均線的時間周期
 
         # 三重指數平滑異同移動平均線 (TRIX)、三重平滑指標 (TEMA): 皆取到nan，導致該項計算皆為「空頭」，故移除該項
-        # modify by huey,2024/06/30,註解: 移動平均收斂背離指標 (MACD)、移動平均收斂背離指標 (MACD)、移動平均收斂背離指標 (MACD)
+        # modify by huey,2024/06/30,註解: 移動平均收斂背離指標 (MACD)
         # 會因為歷史資料數不同而取到不同的值，似乎日期前 33 個都取不到值，如果要用此指標，目前的程式不適用，故暫註解，日後要用再修改
         # modify by huey,2024/06/30,註解: 平均方向性指數 (ADX)
         # 會因為歷史資料數不同而取到不同的值，故暫註解，日後要用再修改
+        # modify by huey,2024/07/02,先將「移動平均收斂背離指標 (MACD)、平均方向性指數 (ADX)」加回來
         sma = talib.SMA(npClose, timeperiod=iShortTerm) #簡單移動平均線 (SMA)
         ema = talib.EMA(npClose, timeperiod=iShortTerm) #指數移動平均線 (EMA)
-        # macd, macdsignal, macdhist = talib.MACD(npClose, fastperiod=12, slowperiod=26, signalperiod=9) #移動平均收斂背離指標 (MACD)
+        macd, macdsignal, macdhist = talib.MACD(npClose, fastperiod=12, slowperiod=26, signalperiod=9) #移動平均收斂背離指標 (MACD)
         rsi = talib.RSI(npClose, timeperiod=14) #相對強弱指數 (RSI)
         slowk, slowd = talib.STOCH(npHigh, npLow, npClose, fastk_period=14, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0) #隨機指標 (STOCH)
         upperband, middleband, lowerband = talib.BBANDS(npClose, timeperiod=20, nbdevup=2, nbdevdn=2, matype=0) #布林帶 (BBANDS)
@@ -277,7 +278,7 @@ class StockUtils:
         cci    = talib.CCI(npHigh, npLow, npClose, timeperiod=14) #商品通道指數 (CCI)
         mom    = talib.MOM(npClose, timeperiod=10) #動量指標 (MOM)
         sar    = talib.SAR(npHigh, npLow, acceleration=0.02, maximum=0.2) #龐氏指標 (SAR)
-        # adx    = talib.ADX(npHigh, npLow, npClose, timeperiod=14) #平均方向性指數 (ADX)
+        adx    = talib.ADX(npHigh, npLow, npClose, timeperiod=14) #平均方向性指數 (ADX)
         # trix   = talib.TRIX(npClose, timeperiod=30) #三重指數平滑異同移動平均線 (TRIX)
         # tema   = talib.TEMA(npClose, timeperiod=30) #三重平滑指標 (TEMA)
         stddev = talib.STDDEV(npClose, timeperiod=5, nbdev=1) #股票或其他金融時間序列資料的標準差 (Standard Deviation)
@@ -369,7 +370,7 @@ class StockUtils:
             dictSignals = {
                 "簡單移動平均線 (SMA)"       : "多頭" if nClosePrice > sma[i] else "空頭",
                 "指數移動平均線 (EMA)"       : "多頭" if nClosePrice > ema[i] else "空頭",
-                # "移動平均收斂背離指標 (MACD)": "多頭" if macd[i] > macdsignal[i] else "空頭",
+                 "移動平均收斂背離指標 (MACD)": "多頭" if macd[i] > macdsignal[i] else "空頭",
                 "相對強弱指數 (RSI)"         : "多頭" if rsi[i] > 50 else "空頭",
                 "隨機指標 (STOCH)"           : "多頭" if slowk[i] > slowd[i] else "空頭",
                 "布林帶 (BBANDS)"            : "多頭" if nClosePrice < upperband[i] and nClosePrice > lowerband[i] else "空頭",
@@ -381,7 +382,7 @@ class StockUtils:
                 "龐氏指標 (SAR)"             : "多頭" if nClosePrice > sar[i] else "空頭",
                 "力量指標 (FORCE)"           : "多頭" if force_index[i] > 0 else "空頭",
                 "標準差 (STDDEV)"            : "多頭" if nClosePrice < upper_stddev[i] and nClosePrice > lower_stddev[i] else "空頭",
-                # "平均方向性指數 (ADX)"       : "多頭" if adx[i] > 25 else "空頭",
+                 "平均方向性指數 (ADX)"       : "多頭" if adx[i] > 25 else "空頭",
                 "可變移動平均線 (VARMA)"           : "多頭" if varma[i] > varma[i-1] else "空頭",
                 "成交量移動平均線 (VMA 短期)"      : "多頭" if nVolume > vma_short[i] else "空頭",
                 "成交量移動平均線 (VMA 中期)"      : "多頭" if nVolume > vma_mid[i] else "空頭",
