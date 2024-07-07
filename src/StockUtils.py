@@ -10,7 +10,7 @@ import pandas as pd           # 數據分析和處理庫
 import requests               # HTTP 請求庫
 from bs4 import BeautifulSoup # HTML 和 XML 解析庫
 from openpyxl import load_workbook
-from openpyxl.styles import Font
+from openpyxl.styles import Font, PatternFill, Alignment
 
 class StockUtils:
     def __init__(self):
@@ -266,6 +266,7 @@ class StockUtils:
         # modify by huey,2024/06/30,註解: 平均方向性指數 (ADX)
         # 會因為歷史資料數不同而取到不同的值，故暫註解，日後要用再修改
         # modify by huey,2024/07/02,先將「移動平均收斂背離指標 (MACD)、平均方向性指數 (ADX)」加回來
+        # modify by huey,2024/07/05,「Price and Volume Trend (PVT)」與「平衡交易量 (OBV)」重覆
         sma = talib.SMA(npClose, timeperiod=iShortTerm) #簡單移動平均線 (SMA)
         ema = talib.EMA(npClose, timeperiod=iShortTerm) #指數移動平均線 (EMA)
         macd, macdsignal, macdhist = talib.MACD(npClose, fastperiod=12, slowperiod=26, signalperiod=9) #移動平均收斂背離指標 (MACD)
@@ -331,12 +332,10 @@ class StockUtils:
         emv  = talib.LINEARREG(npHigh - npLow, timeperiod=14) #Ease of Movement (EMV)
         kama = talib.KAMA(npClose, timeperiod=30) #Kaufman Adaptive Moving Average (KAMA)
         mfi  = talib.MFI(npHigh, npLow, npClose, npVolume, timeperiod=14) #Money Flow Index (MFI)
-        pvt  = talib.OBV(npClose, npVolume) #Price and Volume Trend (PVT)
         # print(F"cmo  = {type(cmo)} {cmo}")
         # print(F"emv  = {type(cmo)} {emv}")
         # print(F"kama = {type(cmo)} {kama}")
         # print(F"mfi  = {type(mfi)} {mfi}")
-        # print(F"pvt  = {type(pvt)} {pvt}")
 
 
         # ------------------------------
@@ -392,7 +391,6 @@ class StockUtils:
                 "Ease of Movement (EMV)"           : "多頭" if emv[i] > 0 else "空頭",
                 "Kaufman Adaptive Moving Average (KAMA)": "多頭" if nClosePrice > kama[i] else "空頭",
                 "Money Flow Index (MFI)"          : "多頭" if mfi[i] > 50 else "空頭",
-                "Price and Volume Trend (PVT)"    : "多頭" if pvt[i] > pvt[i-1] else "空頭",
             }
             # print(F"\t dictSignals = ({type(dictSignals)}) {dictSignals}")
 
@@ -735,6 +733,20 @@ class StockUtils:
         for row in worksheet.iter_rows():
             for cell in row:
                 cell.font = font
+
+        # 設定第一列的單元格自動換行和背景顏色
+        fill = PatternFill(start_color='FFC000', end_color='FFC000', fill_type='solid')
+        for cell in worksheet[1]:  # worksheet[1] 指的是第一列
+            cell.alignment = Alignment(wrap_text=True)  # 自動換行
+            cell.fill = fill  # 設定背景顏色
+
+        # 設定第一欄的欄寬為 13
+        worksheet.column_dimensions['A'].width = 13
+
+        # 設定 B 到 H 欄的欄寬為 10
+        columns_to_resize = ['B', 'C', 'D', 'E', 'F', 'G', 'H']
+        for col in columns_to_resize:
+            worksheet.column_dimensions[col].width = 10
 
         # 保存更改
         workbook.save(sFilePath)

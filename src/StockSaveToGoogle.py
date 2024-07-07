@@ -225,7 +225,6 @@ class StockSaveToGoogle:
                         "Ease of Movement (EMV)" : dictSignals.get("Ease of Movement (EMV)", 0),
                         "Kaufman Adaptive Moving Average (KAMA)" : dictSignals.get("Kaufman Adaptive Moving Average (KAMA)", 0),
                         "Money Flow Index (MFI)" : dictSignals.get("Money Flow Index (MFI)", 0),
-                        "Price and Volume Trend (PVT)" : dictSignals.get("Price and Volume Trend (PVT)", 0),
                     })
 
             # ------------------------------
@@ -238,7 +237,7 @@ class StockSaveToGoogle:
                         ,"技術指標-多頭數量","技術指標-空頭數量"
                         ,"「多頭數量」連續增加天數","「多頭數量」連續>20天數","「多頭數量」連續>15天數"
                         ,"「空頭數量」連續增加天數","「空頭數量」連續>20天數","「空頭數量」連續>15天數"
-                        , "簡單移動平均線 (SMA)", "指數移動平均線 (EMA)", "移動平均收斂背離指標 (MACD)", "相對強弱指數 (RSI)", "隨機指標 (STOCH)", "布林帶 (BBANDS)", "平衡交易量 (OBV)", "威廉指標 (WILLR)", "平均真實範圍 (ATR)", "商品通道指數 (CCI)", "動量指標 (MOM)", "龐氏指標 (SAR)", "力量指標 (FORCE)", "標準差 (STDDEV)", "平均方向性指數 (ADX)", "可變移動平均線 (VARMA)", "成交量移動平均線 (VMA 短期)", "成交量移動平均線 (VMA 中期)", "成交量移動平均線 (VMA 長期)", "成交量比率 (VROC)", "Chande Momentum Oscillator (CMO)", "Ease of Movement (EMV)", "Kaufman Adaptive Moving Average (KAMA)", "Money Flow Index (MFI)", "Price and Volume Trend (PVT)"]
+                        , "簡單移動平均線 (SMA)", "指數移動平均線 (EMA)", "移動平均收斂背離指標 (MACD)", "相對強弱指數 (RSI)", "隨機指標 (STOCH)", "布林帶 (BBANDS)", "平衡交易量 (OBV)", "威廉指標 (WILLR)", "平均真實範圍 (ATR)", "商品通道指數 (CCI)", "動量指標 (MOM)", "龐氏指標 (SAR)", "力量指標 (FORCE)", "標準差 (STDDEV)", "平均方向性指數 (ADX)", "可變移動平均線 (VARMA)", "成交量移動平均線 (VMA 短期)", "成交量移動平均線 (VMA 中期)", "成交量移動平均線 (VMA 長期)", "成交量比率 (VROC)", "Chande Momentum Oscillator (CMO)", "Ease of Movement (EMV)", "Kaufman Adaptive Moving Average (KAMA)", "Money Flow Index (MFI)"]
             print(F"\t columns size {type(columns)} {len(columns)}")
             print(F"\t listOutput size {type(listOutput)} {len(listOutput)}")
 
@@ -531,7 +530,6 @@ class StockSaveToGoogle:
                         "Ease of Movement (EMV)" : dictSignals.get("Ease of Movement (EMV)", 0),
                         "Kaufman Adaptive Moving Average (KAMA)" : dictSignals.get("Kaufman Adaptive Moving Average (KAMA)", 0),
                         "Money Flow Index (MFI)" : dictSignals.get("Money Flow Index (MFI)", 0),
-                        "Price and Volume Trend (PVT)" : dictSignals.get("Price and Volume Trend (PVT)", 0),
                     })
 
             # ------------------------------
@@ -547,7 +545,7 @@ class StockSaveToGoogle:
                         ,"5日漲幅","20日漲幅"
                         ,"外資連買(天)","外資連買張數","投信連買(天)","投信連買張數","自營商連買(天)"
                         ,"大戶近1週增減","散戶近1週增減％","進出分點總家數差","產業名稱","資料來源"
-                        , "簡單移動平均線 (SMA)", "指數移動平均線 (EMA)", "移動平均收斂背離指標 (MACD)", "相對強弱指數 (RSI)", "隨機指標 (STOCH)", "布林帶 (BBANDS)", "平衡交易量 (OBV)", "威廉指標 (WILLR)", "平均真實範圍 (ATR)", "商品通道指數 (CCI)", "動量指標 (MOM)", "龐氏指標 (SAR)", "力量指標 (FORCE)", "標準差 (STDDEV)", "平均方向性指數 (ADX)", "可變移動平均線 (VARMA)", "成交量移動平均線 (VMA 短期)", "成交量移動平均線 (VMA 中期)", "成交量移動平均線 (VMA 長期)", "成交量比率 (VROC)", "Chande Momentum Oscillator (CMO)", "Ease of Movement (EMV)", "Kaufman Adaptive Moving Average (KAMA)", "Money Flow Index (MFI)", "Price and Volume Trend (PVT)"]
+                        , "簡單移動平均線 (SMA)", "指數移動平均線 (EMA)", "移動平均收斂背離指標 (MACD)", "相對強弱指數 (RSI)", "隨機指標 (STOCH)", "布林帶 (BBANDS)", "平衡交易量 (OBV)", "威廉指標 (WILLR)", "平均真實範圍 (ATR)", "商品通道指數 (CCI)", "動量指標 (MOM)", "龐氏指標 (SAR)", "力量指標 (FORCE)", "標準差 (STDDEV)", "平均方向性指數 (ADX)", "可變移動平均線 (VARMA)", "成交量移動平均線 (VMA 短期)", "成交量移動平均線 (VMA 中期)", "成交量移動平均線 (VMA 長期)", "成交量比率 (VROC)", "Chande Momentum Oscillator (CMO)", "Ease of Movement (EMV)", "Kaufman Adaptive Moving Average (KAMA)", "Money Flow Index (MFI)"]
             print(F"columns size {type(columns)} {len(columns)}")
             print(F"listOutput size {type(listOutput)} {len(listOutput)}")
 
