@@ -91,7 +91,7 @@ class StockSaveToGoogle:
 
             # 處理每個工作表的數據
             sGetDay = self.sToday
-            # sGetDay = "2024-06-28"
+            # sGetDay = "2024-07-12"
 
             # get GoogleSheet 中的第一個 工作表(worksheet)
             wksInput = self.shtInputSell[0]
@@ -165,11 +165,11 @@ class StockSaveToGoogle:
                     print(F"\t iDownDays15 = ({type(iDownDays15)}) {iDownDays15}")
 
                     # 將數據保存到 Excel 文件
-                    sPath = "C:/Users/user/Desktop/股票技術指標輸出"
+                    sPath = "C:/Users/user/Desktop/股票技術指標輸出/"
                     self.objStockUtils.saveToExcel(sPath, listStockInfo, dictDays)
 
                     # 將數據保存到 Google 文件 (技術指標明細)
-                    self.objStockUtils.saveToGoogle(listStockInfo, dictDays)
+                    # self.objStockUtils.saveToGoogle(listStockInfo, dictDays)
 
                     # ------------------------------
                     # get 賣出Flag
@@ -205,26 +205,36 @@ class StockSaveToGoogle:
                         "指數移動平均線 (EMA)" : dictSignals.get("指數移動平均線 (EMA)", 0),
                         "移動平均收斂背離指標 (MACD)" : dictSignals.get("移動平均收斂背離指標 (MACD)", 0),
                         "相對強弱指數 (RSI)" : dictSignals.get("相對強弱指數 (RSI)", 0),
-                        "隨機指標 (STOCH)" : dictSignals.get("隨機指標 (STOCH)", 0),
-                        "布林帶 (BBANDS)" : dictSignals.get("布林帶 (BBANDS)", 0),
                         "平衡交易量 (OBV)" : dictSignals.get("平衡交易量 (OBV)", 0),
                         "威廉指標 (WILLR)" : dictSignals.get("威廉指標 (WILLR)", 0),
-                        "平均真實範圍 (ATR)" : dictSignals.get("平均真實範圍 (ATR)", 0),
-                        "商品通道指數 (CCI)" : dictSignals.get("商品通道指數 (CCI)", 0),
                         "動量指標 (MOM)" : dictSignals.get("動量指標 (MOM)", 0),
                         "龐氏指標 (SAR)" : dictSignals.get("龐氏指標 (SAR)", 0),
                         "力量指標 (FORCE)" : dictSignals.get("力量指標 (FORCE)", 0),
-                        "標準差 (STDDEV)" : dictSignals.get("標準差 (STDDEV)", 0),
+                        "成交量比率 (VROC)" : dictSignals.get("成交量比率 (VROC)", 0),
+                        "Money Flow Index (MFI)" : dictSignals.get("Money Flow Index (MFI)", 0),
+                        # add by huey,2024/07/07,加入新的技術指標
+                        "線性回歸 (LINEARREG)" : dictSignals.get("線性回歸 (LINEARREG)", 0),
+                        "線性回歸角度 (LINEARREG_ANGLE)" : dictSignals.get("線性回歸角度 (LINEARREG_ANGLE)", 0),
+                        "線性回歸斜率 (LINEARREG_SLOPE)" : dictSignals.get("線性回歸斜率 (LINEARREG_SLOPE)", 0),
+                        "中價 (MEDPRICE)" : dictSignals.get("中價 (MEDPRICE)", 0),
+                        "Percentage Price Oscillator (PPO)" : dictSignals.get("Percentage Price Oscillator (PPO)", 0),
+                        "Rate of change (ROC)" : dictSignals.get("Rate of change (ROC)", 0),
+                        "Rate of change Percentage (ROCP)" : dictSignals.get("Rate of change Percentage (ROCP)", 0),
+                        "時間序列預測 (TSF)" : dictSignals.get("時間序列預測 (TSF)", 0),
+                        "典型價格 (TYPPRICE)" : dictSignals.get("典型價格 (TYPPRICE)", 0),
+                        "加權收盤價格 (WCLPRICE)" : dictSignals.get("加權收盤價格 (WCLPRICE)", 0),
+                        # add by huey,2024/07/07,移除的技術指標
+                        "隨機指標 (STOCH)" : dictSignals.get("隨機指標 (STOCH)", 0),
+                        "布林帶 (BBANDS)" : dictSignals.get("布林帶 (BBANDS)", 0),
+                        "平均真實範圍 (ATR)" : dictSignals.get("平均真實範圍 (ATR)", 0),
+                        "商品通道指數 (CCI)" : dictSignals.get("商品通道指數 (CCI)", 0),
                         "平均方向性指數 (ADX)" : dictSignals.get("平均方向性指數 (ADX)", 0),
                         "可變移動平均線 (VARMA)" : dictSignals.get("可變移動平均線 (VARMA)", 0),
                         "成交量移動平均線 (VMA 短期)" : dictSignals.get("成交量移動平均線 (VMA 短期)", 0),
                         "成交量移動平均線 (VMA 中期)" : dictSignals.get("成交量移動平均線 (VMA 中期)", 0),
                         "成交量移動平均線 (VMA 長期)" : dictSignals.get("成交量移動平均線 (VMA 長期)", 0),
-                        "成交量比率 (VROC)" : dictSignals.get("成交量比率 (VROC)", 0),
                         "Chande Momentum Oscillator (CMO)" : dictSignals.get("Chande Momentum Oscillator (CMO)", 0),
-                        "Ease of Movement (EMV)" : dictSignals.get("Ease of Movement (EMV)", 0),
                         "Kaufman Adaptive Moving Average (KAMA)" : dictSignals.get("Kaufman Adaptive Moving Average (KAMA)", 0),
-                        "Money Flow Index (MFI)" : dictSignals.get("Money Flow Index (MFI)", 0),
                     })
 
             # ------------------------------
@@ -237,7 +247,9 @@ class StockSaveToGoogle:
                         ,"技術指標-多頭數量","技術指標-空頭數量"
                         ,"「多頭數量」連續增加天數","「多頭數量」連續>20天數","「多頭數量」連續>15天數"
                         ,"「空頭數量」連續增加天數","「空頭數量」連續>20天數","「空頭數量」連續>15天數"
-                        , "簡單移動平均線 (SMA)", "指數移動平均線 (EMA)", "移動平均收斂背離指標 (MACD)", "相對強弱指數 (RSI)", "隨機指標 (STOCH)", "布林帶 (BBANDS)", "平衡交易量 (OBV)", "威廉指標 (WILLR)", "平均真實範圍 (ATR)", "商品通道指數 (CCI)", "動量指標 (MOM)", "龐氏指標 (SAR)", "力量指標 (FORCE)", "標準差 (STDDEV)", "平均方向性指數 (ADX)", "可變移動平均線 (VARMA)", "成交量移動平均線 (VMA 短期)", "成交量移動平均線 (VMA 中期)", "成交量移動平均線 (VMA 長期)", "成交量比率 (VROC)", "Chande Momentum Oscillator (CMO)", "Ease of Movement (EMV)", "Kaufman Adaptive Moving Average (KAMA)", "Money Flow Index (MFI)"]
+                        , "簡單移動平均線 (SMA)","指數移動平均線 (EMA)","移動平均收斂背離指標 (MACD)","相對強弱指數 (RSI)","平衡交易量 (OBV)","威廉指標 (WILLR)","動量指標 (MOM)","龐氏指標 (SAR)","力量指標 (FORCE)","成交量比率 (VROC)","Money Flow Index (MFI)","線性回歸 (LINEARREG)","線性回歸角度 (LINEARREG_ANGLE)","線性回歸斜率 (LINEARREG_SLOPE)","中價 (MEDPRICE)","Percentage Price Oscillator (PPO)","Rate of change (ROC)","Rate of change Percentage (ROCP)","時間序列預測 (TSF)","典型價格 (TYPPRICE)","加權收盤價格 (WCLPRICE)",
+                        "隨機指標 (STOCH)","布林帶 (BBANDS)","平均真實範圍 (ATR)","商品通道指數 (CCI)","平均方向性指數 (ADX)","可變移動平均線 (VARMA)","成交量移動平均線 (VMA 短期)","成交量移動平均線 (VMA 中期)","成交量移動平均線 (VMA 長期)","Chande Momentum Oscillator (CMO)","Kaufman Adaptive Moving Average (KAMA)"
+                        ]
             print(F"\t columns size {type(columns)} {len(columns)}")
             print(F"\t listOutput size {type(listOutput)} {len(listOutput)}")
 
@@ -362,7 +374,7 @@ class StockSaveToGoogle:
 
             # 處理每個工作表的數據
             sGetDay = self.sToday
-            # sGetDay = "2024-06-28"
+            # sGetDay = "2024-07-12"
             self.processWorksheet(wksInput1,sGetDay)
             self.processWorksheet(wksInput2,sGetDay)
             self.processWorksheet(wksInput3,sGetDay)
@@ -457,7 +469,7 @@ class StockSaveToGoogle:
                     # 20日漲幅 < 10
                     # 外資連買(天) > 1 OR 投信連買(天) > 1
                     # 進出分點總家數差 < 0
-                    # 「多頭數量」連續增加天數 >= 2 OR 「多頭數量」連續大於20天數 > 3
+                    # 「多頭數量」連續增加天數 >= 2
                     growth05 = dict.get("5日漲幅", 0)
                     growth20 = dict.get("20日漲幅", 0)
                     foreign_investors_buying = dict.get("外資連買(天)", 0)
@@ -473,7 +485,7 @@ class StockSaveToGoogle:
                     if float(growth05) < 5 and float(growth20) < 10:
                         if (float(foreign_investors_buying) > 1 or float(investment_trust_buying) > 1):
                             if int(households) < 0:
-                                if iUpDays00 >= 2 or iUpDays20 > 3:
+                                if iUpDays00 >= 2:
                                     isBuy = True
 
                     listOutput.append({
@@ -510,27 +522,38 @@ class StockSaveToGoogle:
                         "指數移動平均線 (EMA)" : dictSignals.get("指數移動平均線 (EMA)", 0),
                         "移動平均收斂背離指標 (MACD)" : dictSignals.get("移動平均收斂背離指標 (MACD)", 0),
                         "相對強弱指數 (RSI)" : dictSignals.get("相對強弱指數 (RSI)", 0),
-                        "隨機指標 (STOCH)" : dictSignals.get("隨機指標 (STOCH)", 0),
-                        "布林帶 (BBANDS)" : dictSignals.get("布林帶 (BBANDS)", 0),
                         "平衡交易量 (OBV)" : dictSignals.get("平衡交易量 (OBV)", 0),
                         "威廉指標 (WILLR)" : dictSignals.get("威廉指標 (WILLR)", 0),
-                        "平均真實範圍 (ATR)" : dictSignals.get("平均真實範圍 (ATR)", 0),
-                        "商品通道指數 (CCI)" : dictSignals.get("商品通道指數 (CCI)", 0),
                         "動量指標 (MOM)" : dictSignals.get("動量指標 (MOM)", 0),
                         "龐氏指標 (SAR)" : dictSignals.get("龐氏指標 (SAR)", 0),
                         "力量指標 (FORCE)" : dictSignals.get("力量指標 (FORCE)", 0),
-                        "標準差 (STDDEV)" : dictSignals.get("標準差 (STDDEV)", 0),
+                        "成交量比率 (VROC)" : dictSignals.get("成交量比率 (VROC)", 0),
+                        "Money Flow Index (MFI)" : dictSignals.get("Money Flow Index (MFI)", 0),
+                        # add by huey,2024/07/07,加入新的技術指標
+                        "線性回歸 (LINEARREG)" : dictSignals.get("線性回歸 (LINEARREG)", 0),
+                        "線性回歸角度 (LINEARREG_ANGLE)" : dictSignals.get("線性回歸角度 (LINEARREG_ANGLE)", 0),
+                        "線性回歸斜率 (LINEARREG_SLOPE)" : dictSignals.get("線性回歸斜率 (LINEARREG_SLOPE)", 0),
+                        "中價 (MEDPRICE)" : dictSignals.get("中價 (MEDPRICE)", 0),
+                        "Percentage Price Oscillator (PPO)" : dictSignals.get("Percentage Price Oscillator (PPO)", 0),
+                        "Rate of change (ROC)" : dictSignals.get("Rate of change (ROC)", 0),
+                        "Rate of change Percentage (ROCP)" : dictSignals.get("Rate of change Percentage (ROCP)", 0),
+                        "時間序列預測 (TSF)" : dictSignals.get("時間序列預測 (TSF)", 0),
+                        "典型價格 (TYPPRICE)" : dictSignals.get("典型價格 (TYPPRICE)", 0),
+                        "加權收盤價格 (WCLPRICE)" : dictSignals.get("加權收盤價格 (WCLPRICE)", 0),
+                        # add by huey,2024/07/07,移除的技術指標
+                        "隨機指標 (STOCH)" : dictSignals.get("隨機指標 (STOCH)", 0),
+                        "布林帶 (BBANDS)" : dictSignals.get("布林帶 (BBANDS)", 0),
+                        "平均真實範圍 (ATR)" : dictSignals.get("平均真實範圍 (ATR)", 0),
+                        "商品通道指數 (CCI)" : dictSignals.get("商品通道指數 (CCI)", 0),
                         "平均方向性指數 (ADX)" : dictSignals.get("平均方向性指數 (ADX)", 0),
                         "可變移動平均線 (VARMA)" : dictSignals.get("可變移動平均線 (VARMA)", 0),
                         "成交量移動平均線 (VMA 短期)" : dictSignals.get("成交量移動平均線 (VMA 短期)", 0),
                         "成交量移動平均線 (VMA 中期)" : dictSignals.get("成交量移動平均線 (VMA 中期)", 0),
                         "成交量移動平均線 (VMA 長期)" : dictSignals.get("成交量移動平均線 (VMA 長期)", 0),
-                        "成交量比率 (VROC)" : dictSignals.get("成交量比率 (VROC)", 0),
                         "Chande Momentum Oscillator (CMO)" : dictSignals.get("Chande Momentum Oscillator (CMO)", 0),
-                        "Ease of Movement (EMV)" : dictSignals.get("Ease of Movement (EMV)", 0),
                         "Kaufman Adaptive Moving Average (KAMA)" : dictSignals.get("Kaufman Adaptive Moving Average (KAMA)", 0),
-                        "Money Flow Index (MFI)" : dictSignals.get("Money Flow Index (MFI)", 0),
                     })
+                    print(F"a = {a} |listOutput size {type(listOutput)} {len(listOutput)}")
 
             # ------------------------------
             # 將資料寫入 GoogleSheet 的內容
@@ -545,7 +568,9 @@ class StockSaveToGoogle:
                         ,"5日漲幅","20日漲幅"
                         ,"外資連買(天)","外資連買張數","投信連買(天)","投信連買張數","自營商連買(天)"
                         ,"大戶近1週增減","散戶近1週增減％","進出分點總家數差","產業名稱","資料來源"
-                        , "簡單移動平均線 (SMA)", "指數移動平均線 (EMA)", "移動平均收斂背離指標 (MACD)", "相對強弱指數 (RSI)", "隨機指標 (STOCH)", "布林帶 (BBANDS)", "平衡交易量 (OBV)", "威廉指標 (WILLR)", "平均真實範圍 (ATR)", "商品通道指數 (CCI)", "動量指標 (MOM)", "龐氏指標 (SAR)", "力量指標 (FORCE)", "標準差 (STDDEV)", "平均方向性指數 (ADX)", "可變移動平均線 (VARMA)", "成交量移動平均線 (VMA 短期)", "成交量移動平均線 (VMA 中期)", "成交量移動平均線 (VMA 長期)", "成交量比率 (VROC)", "Chande Momentum Oscillator (CMO)", "Ease of Movement (EMV)", "Kaufman Adaptive Moving Average (KAMA)", "Money Flow Index (MFI)"]
+                        , "簡單移動平均線 (SMA)","指數移動平均線 (EMA)","移動平均收斂背離指標 (MACD)","相對強弱指數 (RSI)","平衡交易量 (OBV)","威廉指標 (WILLR)","動量指標 (MOM)","龐氏指標 (SAR)","力量指標 (FORCE)","成交量比率 (VROC)","Money Flow Index (MFI)","線性回歸 (LINEARREG)","線性回歸角度 (LINEARREG_ANGLE)","線性回歸斜率 (LINEARREG_SLOPE)","中價 (MEDPRICE)","Percentage Price Oscillator (PPO)","Rate of change (ROC)","Rate of change Percentage (ROCP)","時間序列預測 (TSF)","典型價格 (TYPPRICE)","加權收盤價格 (WCLPRICE)",
+                        "隨機指標 (STOCH)","布林帶 (BBANDS)","平均真實範圍 (ATR)","商品通道指數 (CCI)","平均方向性指數 (ADX)","可變移動平均線 (VARMA)","成交量移動平均線 (VMA 短期)","成交量移動平均線 (VMA 中期)","成交量移動平均線 (VMA 長期)","Chande Momentum Oscillator (CMO)","Kaufman Adaptive Moving Average (KAMA)"
+                        ]
             print(F"columns size {type(columns)} {len(columns)}")
             print(F"listOutput size {type(listOutput)} {len(listOutput)}")
 
