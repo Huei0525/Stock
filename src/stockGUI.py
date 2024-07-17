@@ -317,8 +317,8 @@ def readExcel():
         df_result['股票代號'] = df_result['股票代號'].astype(str)
 
         # 將兩個 DataFrame 合併 on為合併的基準列
-        # df_merged = pd.merge(df_excel, df_result, on=["日期", "股票代號", "股票名稱", "收盤價"], how='left')
-        df_merged = pd.merge(df_excel, df_result, on=["日期", "股票代號", "股票名稱"], how='left')
+        df_merged = pd.merge(df_excel, df_result, on=["日期", "股票代號", "股票名稱", "收盤價"], how='left')
+        # df_merged = pd.merge(df_excel, df_result, on=["日期", "股票代號", "股票名稱"], how='left')
         
         # 如果指定欄位存在，將其刪除
         listDelColumns = ['技術多頭', '技術空頭']
@@ -335,8 +335,8 @@ def readExcel():
         print(F"\t [readExcel] sFileName = ({type(sFileName)}) {sFileName})")
 
         # 將資料保存到 Excel 文件
-        # sFilePath = f"{sPath}/{sFileName}"
-        sFilePath = f"{sPath}/test222.xlsx"
+        sFilePath = f"{sPath}/{sFileName}"
+        # sFilePath = f"{sPath}/test222.xlsx"
         df_merged.to_excel(sFilePath, index=False)
         messagebox.showinfo("保存成功", f"資料已保存至 {sFilePath}")
 
@@ -352,7 +352,78 @@ def verify():
     """
     回測程式 (row=4)
     """
-    print('\t ===== verify() ===== ')
+    print('===== readExcel() ===== ')
+    global stockCode, stockName
+    
+    # get User 選擇Excel的檔案路徑+檔名
+    sFilePath = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx *.xls")])
+    # print(F"\t [readExcel] sFilePath = ({type(sFilePath)}) {sFilePath}")
+    
+    if not sFilePath:
+        return
+
+    try:
+        # 將「結果顯示文本框」狀態設置為 NORMAL ，允許修改內容
+        textResult.config(state=tk.NORMAL)
+        # 刪除「結果顯示文本框」全部內容
+        textResult.delete(1.0, tk.END)
+
+        # 設置為微軟正黑體
+        microsoft_zh_font = font.Font(family="Microsoft JhengHei", size=10)
+        textResult.configure(font=microsoft_zh_font)
+
+        # ------------------------------
+        # 讀取 Excel 文件
+        # ------------------------------
+        df_excel = pd.read_excel(sFilePath)
+        df_excel['日期'] = df_excel['日期'].astype(str)
+        df_excel['股票代號'] = df_excel['股票代號'].astype(str)
+        listStockCode = df_excel.iloc[:, 1].astype(str).tolist()
+        print(F"[readExcel] listStockCode = ({type(listStockCode)}) (size ={len(listStockCode)}) {listStockCode}")
+        
+        # 創建了一個空的 DataFrame，用來存儲從多個股票代碼中獲取的所有股票數據
+        df_result = pd.DataFrame()
+        
+        listOutput = []
+        iNo = 0
+        for stockCode in listStockCode:
+            iNo += 1
+            stockName = twstock.codes[stockCode].name
+            print(F"[readExcel] {iNo}.({type(stockCode)}) {stockCode} {stockName} {objStockUtils.sHr1}")
+
+            # ------------------------------
+            # 取得各技術指標
+            # ------------------------------
+            listStockInfo = objStockUtils.getStockAnalyze(stockCode,"","")
+            dictDays = objStockUtils.countIncreaseDaysHistory(listStockInfo)
+            print(F"[readExcel] listStockInfo = ({type(listStockInfo)}) (size ={len(listStockInfo)})")
+            print(F"[readExcel] dictDays = ({type(dictDays)}) (size ={len(dictDays)})")
+
+            listStockInfo.sort(key=lambda x: x[0], reverse=False)
+            for a in range(len(listStockInfo)):
+                listStock = listStockInfo[a]
+                stockDate   = listStock[0] # 交易日期
+                stockCode   = listStock[1] # 股票代號
+                stockName   = listStock[2] # 股票名稱
+                fClosePrice = listStock[3] # 收盤價
+                iUpCount    = listStock[4] # 多頭數量
+                iDownCount  = listStock[5] # 空頭數量
+
+                # get 「多頭/空頭數量」連續增加天數
+                iUpDays   = dictDays[stockDate+"Up"]
+                iDownDays = dictDays[stockDate+"Down"]
+                # print(F"\t\t\t [readExcel] {a}.{stockDate} {objStockUtils.sHr1}")
+                # print(F"\t\t\t [readExcel] stockDate = ({type(stockDate)}) ")
+                # print(f"\treadExcel iUpDays = {iUpDays}")
+                # print(f"\treadExcel iDownDays = {iDownDays}")
+                
+                listOutput.append([stockDate, stockCode, stockName, fClosePrice, iUpCount, iDownCount, iUpDays, iDownDays])
+
+    except Exception as e:
+        print(F"\t [ERROR] = {e}")
+        messagebox.showerror("錯誤", f"錯誤: 讀取 Excel 文件失敗: {e}")
+
+
 
 
 

@@ -517,6 +517,9 @@ class StockUtils:
         # 將 List 用日期降序排序
         listResult.sort(key=lambda x: x[0], reverse=True)
 
+        # get 「多頭/空頭數量」連續增加天數
+        dictDays = self.countIncreaseDaysHistory(listResult)
+
         return listResult
 
 
@@ -1076,17 +1079,6 @@ class StockUtils:
         return dict
 
 
-        # ------------------------------
-        # get 股票基本資料 (twstock)
-        # ------------------------------
-        # 用 twstock 取得股票資料
-        # tObjStock = twstock.Stock(stockCode)
-
-        # # 取得股票基本資料 (type='股票', code='6197', name='佳必琪', ISIN='TW0006197007', start='2004/11/08', market='上市', group='電子零組件業', CFI='ESVUFR')
-        # stockInfo = twstock.codes.get(stockCode)
-        # stockName = stockInfo.name
-        # print(F"\t stockName = ({type(stockName)}) {stockName}")
-
 
     # def __getStockData4TWStock(self,stockCode):
         # '''
@@ -1251,7 +1243,7 @@ class StockUtils:
 
     def __ExcelFormat(self,sFilePath):
         """
-        調整Excel格式.
+        調整Excel格式. (目前沒有使用)
 
         Args:
             sFilePath (str): 檔案路徑及檔案名稱 (ex:C:/Users/user/Desktop/股票技術指標輸出/2024-05-24_3703_欣陸_測試輸出.xlsx)
@@ -1286,16 +1278,211 @@ class StockUtils:
             cell.font = font  # 設定字體為微軟正黑體
 
         # 設定欄寬
-        worksheet.column_dimensions['A'].width = 3
-        worksheet.column_dimensions['B'].width = 13
-        worksheet.column_dimensions['C'].width = 3
-        columnsSize10 = ['D', 'E', 'F', 'G', 'H', 'I','J']
-        for col in columnsSize10:
-            worksheet.column_dimensions[col].width = 10
+        # worksheet.column_dimensions['A'].width = 3
+        # worksheet.column_dimensions['B'].width = 13
+        # worksheet.column_dimensions['C'].width = 3
+        # columnsSize10 = ['D', 'E', 'F', 'G', 'H', 'I','J']
+        # for col in columnsSize10:
+        #     worksheet.column_dimensions[col].width = 10
 
         # 保存更改
         workbook.save(sFilePath)
 
 
 
+    def verify(self):
+        """
+        回測程式.
+
+        Args:
+        Returns:
+            datetime: 調整後的日期
+        """
+        print('\t ===== verify() ===== ')
+
+        # ------------------------------
+        # 組出要寫到 Excel 的內容
+        # ------------------------------
+        listOutput = []
+
+        # Set 此次要迴測的股票
+        stockList = ["3703:欣陸","2472:立隆電","4919:新唐","6191:精成科","6197:佳必琪","2353:宏碁","3532:台勝科","2451:創見","3017:奇鋐","2002:中鋼","3042:晶技"]
+        # stockList = ["3703:欣陸"]
+
+        iNo = 0
+        for stock in stockList:
+            iNo += iNo
+            stockCode, stockName = stock.split(":")
+            print(f"{iNo}.stockCode = {stockCode}, stockName = {stockName} {self.sHr1}")
+
+            # ------------------------------
+            # 讀取 Excel 檔案
+            # ------------------------------
+            sFilePath = f"C:/Users/user/Desktop/股票技術指標輸出/回測數據/{stockCode}_{stockName}_2021-01-04_to_2024-07-16_FromClass.xlsx"
+            print(F"\t sFilePath = {sFilePath}")
+
+            # 使用 pandas 讀取 Excel 檔案
+            df = pd.read_excel(sFilePath, sheet_name='Sheet1')
+
+            # # 迴圈遍歷 DataFrame 的每一列並印出每個欄位的值
+            # # for index, row in df.iterrows():
+            #     # print(f'Row {index}:')
+            #     # for col in df.columns:
+            #         # print(f'  {col}: {row[col]}')
+            # # <class 'bool'>
+
+            # ------------------------------
+            # 算出每隻股票的買/賣日期及價格
+            # ------------------------------
+            # # listMyMoney = [] #<class 'list'>
+            dictMoney = {}
+            dateBuy = ""
+            isBuy = False
+            isSell = False
+            i7Day = 0
+            for i in range(2, len(df)):
+                stockDate   = df.loc[i, '交易日期'] # <class 'str'>
+                stockCode   = df.loc[i, '股票代號'] # <class 'numpy.int64'>
+                stockName   = df.loc[i, '股票名稱'] # <class 'str'>
+                fClosePrice = df.loc[i, '收盤價']   # <class 'numpy.float64'>
+                iUpCount    = df.loc[i, '技術指標-多頭數量'] # <class 'numpy.int64'>
+                iDownCount  = df.loc[i, '技術指標-空頭數量'] # <class 'numpy.int64'>
+                iUpDays     = df.loc[i, '「多頭數量」連續增加天數'] # <class 'numpy.int64'>
+                iDownDays   = df.loc[i, '「空頭數量」連續增加天數'] # <class 'numpy.int64'>
+                # print(F"\t {i}.{stockDate} {self.sHr1}")
+                # print(F"\t\t stockDate = ({type(stockDate)}) {stockDate}")
+                # print(F"\t\t stockCode = ({type(stockCode)}) {stockCode}")
+                # print(F"\t\t stockName = ({type(stockName)}) {stockName}")
+                # print(F"\t\t fClosePrice = ({type(fClosePrice)}) {fClosePrice}")
+                # print(F"\t\t iUpCount = ({type(iUpCount)}) {iUpCount}")
+                # print(F"\t\t iDownCount = ({type(iDownCount)}) {iDownCount}")
+                # print(F"\t\t iUpDays = ({type(iUpDays)}) {iUpDays}")
+                # print(F"\t\t iDownDays = ({type(iDownDays)}) {iDownDays}")
+            
+                # ------------------------------
+                # 條件1
+                # 買:「多頭數量」連續增加天數 >= 3 天
+                # 賣:「空頭數量」連續增加天數 >= 3 天
+                # ------------------------------
+                if iUpDays >=2 and not isBuy:
+                    isBuy = True
+                    isSell = False
+                    
+                    # 記錄 買的 日期 及 價格
+                    dateBuy = stockDate
+                    dictMoney[stockDate] = [stockDate, fClosePrice, iUpCount, iUpDays]
+                    # print(F"\t\t [isBuy] ({type(isBuy)}) {isBuy}")
+
+                if iDownDays >=3 and isBuy and not isSell:
+                    isSell = True
+                    isBuy = False
+                    
+                    # 如果日期已存在於 dictMoney ,記錄 賣的 日期 及 價格
+                    if dateBuy in dictMoney:
+                        dictMoney[dateBuy].extend([stockDate, fClosePrice, iDownCount, iDownDays])
+                    # print(F"\t\t [isSell] ({type(isSell)}) {isSell}")
+
+                # ------------------------------
+                # 條件2
+                # 買:「多頭數量」連續增加天數 >= 3 天
+                # 賣:買進 5/7/14 天後就賣
+                # ------------------------------
+                # if iUpDays >=3 and not isBuy:
+                #     isBuy = True
+                #     isSell = False
+                    
+                #     # 記錄 買的 日期 及 價格
+                #     dateBuy = stockDate
+                #     dictMoney[stockDate] = [stockDate, fClosePrice, iUpCount, iUpDays]
+                #     # print(F"\t\t [isBuy] ({type(isBuy)}) {isBuy}")
+                # if isBuy:
+                #     i7Day = i7Day+1
+                # if i7Day >=14 and isBuy and not isSell:
+                #     isSell = True
+                #     isBuy = False
+                #     i7Day = 0
+                    
+                #     # 如果日期已存在於 dictMoney ,記錄 賣的 日期 及 價格
+                #     if dateBuy in dictMoney:
+                #         dictMoney[dateBuy].extend([stockDate, fClosePrice, iDownCount, iDownDays])
+                #     # print(F"\t\t [isSell] ({type(isSell)}) {isSell}")
+        
+            # 初始化總盈虧、總投資額和總報酬率
+            total_gain_loss  = 0
+            total_investment = 0
+            total_roi_sum    = 0  # 總報酬率
+            for key, value in dictMoney.items():
+                valueSize = len(value)
+                # print(F"\t valueSize = ({type(valueSize)}) {valueSize}")
+
+                if valueSize != 8:
+                    continue
+
+                buy_date   = value[0] # 買入日期
+                buy_price  = value[1] # 買入價格
+                iUpCount   = value[2] # 買入日期-技術指標-多頭數量
+                iUpDays    = value[3] # 買入日期-「多頭數量」連續增加天數'
+
+                sell_date  = value[4] # 賣出日期
+                sell_price = value[5] # 賣出日期
+                iDownCount = value[6] # 賣出日期-技術指標-空頭數量
+                iDownDays  = value[7] # 賣出日期-「空頭數量」連續增加天數
+                print(F"\t {self.sHr2}")
+                print(F"\t Key: {key},value: {value}")
+                print(F"\t buy_date   = ({type(buy_date)}) {buy_date}")
+                print(F"\t buy_price  = ({type(buy_price)}) {buy_price}")
+                print(F"\t sell_date  = ({type(sell_date)}) {sell_date}")
+                print(F"\t sell_price = ({type(sell_price)}) {sell_price}")
+
+                # 計算每次買入1000股的盈虧
+                gain_loss = (sell_price - buy_price) * 1000
+                gain_loss = round(gain_loss, 2)
+                print(F"\t gain_loss = ({type(gain_loss)}) {gain_loss}")
+            
+                # get 投資報酬率，並轉換為百分比
+                roi = (sell_price - buy_price) / buy_price * 100
+                roi = round(roi, 2)
+                print(F"\t roi = ({type(roi)}) {roi}")
+
+        #     # 累加總盈虧
+        #     total_gain_loss += gain_loss
+        #     print(F"\t total_gain_loss = ({type(total_gain_loss)}) {total_gain_loss}")
+            
+        #     # 累加總投資額
+        #     total_investment += buy_price * 1000
+        #     print(F"\t total_investment = ({type(total_investment)}) {total_investment}")
+            
+        #     # 累加每次的報酬率
+        #     total_roi_sum += roi  # 加總每次的報酬率
+        #     print(F"\t total_roi_sum = ({type(total_roi_sum)}) {total_roi_sum}")
+                
+                row = [stockCode,stockName,buy_date, buy_price, iUpCount, iUpDays, sell_date, sell_price, iDownCount, iDownDays, gain_loss, roi]
+                listOutput.append(row)
+
+        # ------------------------------
+        # 將資料寫入 Excel
+        # ------------------------------
+        # Set 表頭
+        # columns = ["股票代號", "股票名稱", "買進日期","買進價格", "賣出日期","賣出價格"]
+        columns = ["股票代號","股票名稱","買進日期","買進價格", "買入日期-技術指標-多頭數量", "買入日期-「多頭數量」連續增加天數", "賣出日期","賣出價格","賣出日期-技術指標-空頭數量","賣出日期-「空頭數量」連續增加天數","每次買入1000股的盈虧","投資報酬率"]
+        # print(F"columns type = {type(columns)}")
+
+        df = pd.DataFrame(listOutput, columns=columns)
+
+        # Set 檔案名稱
+        sPath="C:/Users/user/Desktop/股票技術指標輸出"
+        sFileName = f"2024-07-16_多頭連增2天買_空頭連增3天賣.xlsx"
+        # sFileName = f"2024-07-16_多頭連增3天買_空頭連增3天賣.xlsx"
+        # sFileName = f"2024-07-16_多頭連增3天買_買進7天賣.xlsx"
+        # sFileName = f"2024-07-16_多頭連增3天買_買進5天賣.xlsx"
+        # sFileName = f"2024-07-16_多頭連增3天買_買進14天賣.xlsx"
+
+        # 構建完整的文件路徑
+        sFilePath = f"{sPath}/{sFileName}"
+
+        # 將資料保存到 Excel 文件
+        df.to_excel(sFilePath, index=False)
+        print(f"\t 1.資料已保存到 = {sFilePath}")
+
+        self.__ExcelFormat(sFilePath)
 
